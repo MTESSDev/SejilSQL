@@ -10,6 +10,7 @@ namespace Sejil.Models.Internal
     {
         public string Id { get; set; }
         public string Message { get; set; }
+        public string SourceApp { get; set; }
         public string MessageTemplate { get; set; }
         public string Level { get; set; }
         public DateTime Timestamp { get; set; }

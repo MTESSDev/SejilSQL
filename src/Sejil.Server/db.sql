@@ -3,6 +3,7 @@
 
 CREATE TABLE IF NOT EXISTS log(
 	id TEXT NOT NULL PRIMARY KEY,
+	sourceApp TEXT NOT NULL,
 	message TEXT NOT NULL,
 	messageTemplate TEXT NOT NULL,
 	level VARCHAR(64) NOT NULL,
@@ -11,6 +12,8 @@ CREATE TABLE IF NOT EXISTS log(
 );
 
 CREATE INDEX IF NOT EXISTS log_message_idx ON log(message);
+
+CREATE INDEX IF NOT EXISTS log_sourceApp_idx ON log(sourceApp);
 
 CREATE INDEX IF NOT EXISTS log_level_idx ON log(level);
 

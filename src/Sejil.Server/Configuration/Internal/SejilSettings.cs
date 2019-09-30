@@ -51,7 +51,7 @@ namespace Sejil.Configuration.Internal
                 SqliteDbPath = Path.Combine(appDataFolder, appName, $"Sejil-{UUID}.sqlite");
             }
 
-            NonPropertyColumns = new[] { "message", "messageTemplate", "level", "timestamp", "exception" };
+            NonPropertyColumns = new[] { "message", "messagetemplate", "level", "timestamp", "exception", "sourceapp" };
             PageSize = 100;
         }
 

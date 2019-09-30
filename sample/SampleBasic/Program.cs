@@ -15,7 +15,7 @@ namespace Sample
             Host.CreateDefaultBuilder(args)
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
-                    webBuilder.AddSejil("/sejil", LogLevel.Debug);
+                    webBuilder.AddSejil("/sejil", LogLevel.Critical);
                     webBuilder.UseStartup<Startup>();
                 });
     }

@@ -29,7 +29,7 @@ namespace Microsoft.AspNetCore.Hosting
             var settings = new SejilSettings(url, MapSerilogLogLevel(minLogLevel));
 
             return builder
-                .ConfigureLogging((logging) => logging.AddSerilog(CreateLogger(settings)))
+                //.ConfigureLogging((logging) => logging.AddSerilog(CreateLogger(settings)))
                 .ConfigureServices(services =>
                 {
                     services.TryAddSingleton<IHttpContextAccessor, HttpContextAccessor>();
