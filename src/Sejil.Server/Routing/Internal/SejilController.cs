@@ -5,7 +5,7 @@ using System;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Authentication;
-using Sejil.Configuration.Internal;
+using Sejil.Configuration;
 using Sejil.Data.Internal;
 using Sejil.Models.Internal;
 using System.Text.Json;

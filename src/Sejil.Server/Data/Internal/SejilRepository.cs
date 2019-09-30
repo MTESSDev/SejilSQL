@@ -10,7 +10,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Dapper;
 using Microsoft.Data.Sqlite;
-using Sejil.Configuration.Internal;
+using Sejil.Configuration;
 using Sejil.Models.Internal;
 
 namespace Sejil.Data.Internal

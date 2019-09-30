@@ -1,5 +1,5 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
-using Sejil.Configuration.Internal;
+using Sejil.Configuration;
 using Serilog.Events;
 using System;
 using System.Collections.Generic;

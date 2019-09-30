@@ -4,7 +4,7 @@
 using System;
 using System.Collections.Generic;
 using Moq;
-using Sejil.Configuration.Internal;
+using Sejil.Configuration;
 using Sejil.Data.Internal;
 using Sejil.Models.Internal;
 using Xunit;

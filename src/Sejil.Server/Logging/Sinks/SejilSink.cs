@@ -11,7 +11,7 @@ using Serilog.Core;
 using Serilog.Debugging;
 using Serilog.Events;
 using Serilog.Sinks.PeriodicBatching;
-using Sejil.Configuration.Internal;
+using Sejil.Configuration;
 using System.Diagnostics;
 
 namespace Sejil.Logging.Sinks

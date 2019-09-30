@@ -4,7 +4,7 @@
 using System;
 using System.IO;
 using Sejil;
-using Sejil.Configuration.Internal;
+using Sejil.Configuration;
 using Sejil.Logging.Sinks;
 using Serilog;
 using Serilog.Configuration;

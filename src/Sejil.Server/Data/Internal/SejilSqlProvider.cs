@@ -5,7 +5,7 @@ using System;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using Sejil.Configuration.Internal;
+using Sejil.Configuration;
 using Sejil.Models.Internal;
 
 namespace Sejil.Data.Internal

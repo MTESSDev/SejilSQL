@@ -5,7 +5,7 @@ using Serilog.Events;
 using Serilog.Core;
 using System.IO;
 
-namespace Sejil.Configuration.Internal
+namespace Sejil.Configuration
 {
     public interface ISejilSettings
     {

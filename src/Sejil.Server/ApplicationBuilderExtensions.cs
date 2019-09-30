@@ -7,12 +7,13 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
-using Sejil.Configuration.Internal;
+using Sejil.Configuration;
 using Sejil.Routing.Internal;
 using Sejil.Models.Internal;
 using Serilog.Context;
 using Microsoft.AspNetCore.Routing;
 using System.Text.Json;
+using Sejil.Configuration;
 
 namespace Sejil
 {

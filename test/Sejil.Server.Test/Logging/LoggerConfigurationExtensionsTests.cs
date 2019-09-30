@@ -5,7 +5,7 @@ using System;
 using System.IO;
 using System.Reflection;
 using Moq;
-using Sejil.Configuration.Internal;
+using Sejil.Configuration;
 using Sejil.Logging;
 using Serilog;
 using Xunit;

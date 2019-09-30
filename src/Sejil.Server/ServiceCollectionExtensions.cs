@@ -1,4 +1,4 @@
-﻿using Sejil.Configuration.Internal;
+﻿using Sejil.Configuration;
 using System;
 
 namespace Microsoft.Extensions.DependencyInjection

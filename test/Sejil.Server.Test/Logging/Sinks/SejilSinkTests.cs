@@ -4,7 +4,7 @@
 using System;
 using Microsoft.Data.Sqlite;
 using Moq;
-using Sejil.Configuration.Internal;
+using Sejil.Configuration;
 using Sejil.Logging.Sinks;
 using Xunit;
 using Dapper;
@@ -14,6 +14,7 @@ using Serilog.Events;
 using Serilog.Parsing;
 using System.Threading.Tasks;
 using Sejil.Data.Internal;
+using Sejil.Configuration;
 
 namespace Sejil.Test.Logging.Sinks
 {

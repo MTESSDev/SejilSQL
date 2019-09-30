@@ -7,7 +7,7 @@ using System.Data;
 using System.Threading.Tasks;
 using Microsoft.Data.Sqlite;
 using Moq;
-using Sejil.Configuration.Internal;
+using Sejil.Configuration;
 using Sejil.Data.Internal;
 using Sejil.Models.Internal;
 using Xunit;

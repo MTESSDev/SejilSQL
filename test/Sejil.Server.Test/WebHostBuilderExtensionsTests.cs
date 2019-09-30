@@ -12,7 +12,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Newtonsoft.Json;
-using Sejil.Configuration.Internal;
+using Sejil.Configuration;
 using Sejil.Models.Internal;
 using Sejil.Routing.Internal;
 using Serilog.Events;
@@ -42,13 +42,14 @@ namespace Sejil.Test
                 .ConfigureServices(services => services.AddSingleton<IServer>(Mock.Of<IServer>()));
 
             // Act
-            webhostBuilder.AddSejil(url, logLevel);
+            webhostBuilder.AddSejil(new SejilSettings(url, SejilTools.MapSerilogLogLevel(logLevel)));
 
             // Assert
             var settings = webhostBuilder.Build().Services.GetRequiredService<ISejilSettings>();
             Assert.Equal(url, settings.Url);
             Assert.Equal(expectedMappedLogLevel, settings.LoggingLevelSwitch.MinimumLevel);
         }
+
 
         [Fact]
         public void AddSejil_registeres_required_services()
@@ -60,7 +61,7 @@ namespace Sejil.Test
                     services.AddSingleton<IServer>(Mock.Of<IServer>()));
 
             // Act
-            webhostBuilder.AddSejil("/sejil", LogLevel.Debug);
+            webhostBuilder.AddSejil(new SejilSettings("/sejil", SejilTools.MapSerilogLogLevel(LogLevel.Debug)));
 
             // Assert
             var webhost = webhostBuilder.Build();
@@ -86,7 +87,7 @@ namespace Sejil.Test
                 .ConfigureServices(services => services.AddSingleton<IServer>(Mock.Of<IServer>()));
 
             // Act & assert
-            var ex = Assert.Throws<InvalidOperationException>(() => webhostBuilder.AddSejil("/sejil", LogLevel.None));
+            var ex = Assert.Throws<InvalidOperationException>(() => webhostBuilder.AddSejil(new SejilSettings("/sejil", SejilTools.MapSerilogLogLevel(LogLevel.None))));
             Assert.Equal("Minimum log level cannot be set to None.", ex.Message);
         }
     }

@@ -3,12 +3,12 @@
   <PropertyGroup>
     <Summary>A pluggable logs viewer</Summary>
     <Description>Capture, view and filter your ASP.net core log events right from your app</Description>
-    <Authors>Alaa Masoud</Authors>
+    <Authors>Alaa Masoud, Dany Côté</Authors>
     <Copyright>Copyright © Alaa Masoud</Copyright>
-    <PackageId>Sejil</PackageId>
+    <PackageId>SejilGouvQC</PackageId>
     <PackageTags>sejil;logging;structured</PackageTags>
     <PackageIconUrl></PackageIconUrl>
-    <PackageProjectUrl>https://github.com/alaatm/Sejil</PackageProjectUrl>
+    <PackageProjectUrl>https://github.com/gouvqc/Sejil</PackageProjectUrl>
     <PackageLicenseUrl>http://www.apache.org/licenses/LICENSE-2.0</PackageLicenseUrl>
     <TargetFrameworks>netstandard2.0</TargetFrameworks>
     <VersionPrefix>2.0.0-beta1</VersionPrefix>
@@ -16,6 +16,9 @@
     <GenerateAssemblyVersionAttribute>false</GenerateAssemblyVersionAttribute>
     <DebugType>full</DebugType>
     <RootNamespace>Sejil</RootNamespace>
+    <Version>2.0.0-beta2</Version>
+    <Product>SejilGouvQC</Product>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
   </PropertyGroup>
 
 

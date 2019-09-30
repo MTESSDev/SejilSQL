@@ -10,7 +10,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
-using Sejil.Configuration.Internal;
+using Sejil.Configuration;
 using Sejil.Models.Internal;
 using Sejil.Routing.Internal;
 using Serilog.Events;

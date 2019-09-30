@@ -11,7 +11,7 @@ using Serilog.Core;
 using Serilog.Debugging;
 using Serilog.Events;
 using Serilog.Sinks.PeriodicBatching;
-using Sejil.Configuration.Internal;
+using Sejil.Configuration;
 using System.Diagnostics;
 using System.Dynamic;
 using Newtonsoft.Json;
@@ -22,7 +22,7 @@ namespace Sejil.Logging.Service
     {
         private readonly string _connectionString;
 
-        public SejilService(SejilSettings settings)
+        public SejilService(ISejilSettings settings)
         {
             _connectionString = $"DataSource={settings.SqliteDbPath}";
 

@@ -15,7 +15,7 @@ using System.Dynamic;
 using Newtonsoft.Json.Linq;
 using Serilog.Parsing;
 using Sejil.Logging.Sinks;
-using Sejil.Configuration.Internal;
+using Sejil.Configuration;
 using Sejil.Logging.Service;
 
 namespace SampleBasic.Controllers

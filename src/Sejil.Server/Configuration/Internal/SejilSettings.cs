@@ -5,8 +5,9 @@ using Serilog.Events;
 using Serilog.Core;
 using System.IO;
 using System;
+using Sejil.Configuration;
 
-namespace Sejil.Configuration.Internal
+namespace Sejil.Configuration
 {
     public class SejilSettings : ISejilSettings
     {

@@ -8,7 +8,7 @@ using Serilog;
 using Serilog.Events;
 using Sejil.Data.Internal;
 using Sejil.Routing.Internal;
-using Sejil.Configuration.Internal;
+using Sejil.Configuration;
 using Sejil.Logging;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -24,16 +24,14 @@ namespace Microsoft.AspNetCore.Hosting
         /// <param name="url">The URL at which Sejil should be available.</param>
         /// <param name="minLogLevel">The minimum log level.</param>
         /// <returns></returns>
-        public static IWebHostBuilder AddSejil(this IWebHostBuilder builder, string url, LogLevel minLogLevel)
+        public static IWebHostBuilder AddSejil(this IWebHostBuilder builder, ISejilSettings settings)
         {
-            var settings = new SejilSettings(url, MapSerilogLogLevel(minLogLevel));
-
-            return builder
+              return builder
                 //.ConfigureLogging((logging) => logging.AddSerilog(CreateLogger(settings)))
                 .ConfigureServices(services =>
                 {
                     services.TryAddSingleton<IHttpContextAccessor, HttpContextAccessor>();
-                    services.AddSingleton<ISejilSettings>(settings);
+                    services.AddSingleton(settings);
                     services.AddScoped<ISejilRepository, SejilRepository>();
                     services.AddScoped<ISejilSqlProvider, SejilSqlProvider>();
                     services.AddScoped<ISejilController, SejilController>();
@@ -47,7 +45,12 @@ namespace Microsoft.AspNetCore.Hosting
                 .WriteTo.Sejil(settings)
                 .CreateLogger();
 
-        private static LogEventLevel MapSerilogLogLevel(LogLevel logLevel)
+ 
+    }
+
+    public static class SejilTools
+    {
+        public static LogEventLevel MapSerilogLogLevel(LogLevel logLevel)
         {
             if (logLevel == LogLevel.None)
             {
