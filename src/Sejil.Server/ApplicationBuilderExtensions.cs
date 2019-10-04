@@ -28,7 +28,7 @@ namespace Sejil
         /// <returns></returns>
         public static IApplicationBuilder UseSejil(this IApplicationBuilder app)
         {
-            var settings = app.ApplicationServices.GetService(typeof(ISejilSettings)) as SejilSettings;
+            var settings = (ISejilSettings)app.ApplicationServices.GetService(typeof(ISejilSettings));
             var url = settings.Url.Substring(1); // Skip the '/'
 
             app.Use(async (context, next) =>

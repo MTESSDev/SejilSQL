@@ -16,7 +16,7 @@
     <GenerateAssemblyVersionAttribute>false</GenerateAssemblyVersionAttribute>
     <DebugType>full</DebugType>
     <RootNamespace>Sejil</RootNamespace>
-    <Version>2.0.0-beta2</Version>
+    <Version>2.0.0-beta4</Version>
     <Product>SejilGouvQC</Product>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
   </PropertyGroup>
