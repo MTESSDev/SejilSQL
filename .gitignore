@@ -15,11 +15,9 @@ package-lock.json
 .env.test.local
 .env.production.local
 
-src/Sejil.Server/index.html
 coverage/
 
 ignore/
-
 
 npm-debug.log*
 yarn-debug.log*
