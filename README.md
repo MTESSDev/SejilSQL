@@ -13,11 +13,8 @@ This version let you centralize all your applications logs in one place.
 
 ## Getting started
 
-1. Installing [Sejil](https://www.nuget.org/packages/Sejil/) package
+1. Installing [Sejil](https://github.com/TrucsPES/Sejil/releases) package
 
-    ```powershell
-    dotnet add package Sejil --version 1.0.1-beta1
-    ```
 
 2. Adding code
     Add below code to **Program.cs**:
