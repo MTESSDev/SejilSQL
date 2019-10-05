@@ -7,6 +7,9 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Sejil;
+using Sejil.Configuration;
+using Sejil.Service;
+using Serilog.Events;
 
 namespace Sample
 {
@@ -19,11 +22,13 @@ namespace Sample
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddHostedService<SejilCleanupService>();
             services.AddControllersWithViews();
-
+            services.AddSingleton<SejilService>();
             services.ConfigureSejil(options =>
             {
                 options.Title = "Logs";
+                options.LogRetentionDays = 3;
             });
         }
 

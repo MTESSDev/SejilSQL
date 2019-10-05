@@ -16,7 +16,7 @@ using Newtonsoft.Json.Linq;
 using Serilog.Parsing;
 using Sejil.Logging.Sinks;
 using Sejil.Configuration;
-using Sejil.Logging.Service;
+using Sejil.Service;
 
 namespace SampleBasic.Controllers
 {
@@ -24,6 +24,13 @@ namespace SampleBasic.Controllers
     [ApiController]
     public class LogController : ControllerBase
     {
+        private readonly SejilService _sejilService;
+
+        public LogController(SejilService sejilService)
+        {
+            _sejilService = sejilService;
+        }
+
         [HttpPost(template: "Ajouter")]
         public async Task<IActionResult> PostAjouterAsync()
         {
@@ -37,9 +44,9 @@ namespace SampleBasic.Controllers
 
             var t = JsonConvert.DeserializeObject<Rootobject>(jsonString);
 
-            var sejilService = new SejilService(new SejilSettings("", LogEventLevel.Error));
+            //var sejilService = new SejilService(new SejilSettings("", LogEventLevel.Error));
 
-            await sejilService.EmitBatchAsync(t.events, Request.Query["sourceApp"]);
+            await _sejilService.EmitBatchAsync(t.events, Request.Query["sourceApp"]);
 
             return Ok();
         }

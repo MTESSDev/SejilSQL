@@ -16,15 +16,17 @@ using System.Diagnostics;
 using System.Dynamic;
 using Newtonsoft.Json;
 
-namespace Sejil.Logging.Service
+namespace Sejil.Service
 {
     public class SejilService
     {
+        private readonly ISejilSettings _settings;
         private readonly string _connectionString;
 
         public SejilService(ISejilSettings settings)
         {
             _connectionString = $"DataSource={settings.SqliteDbPath}";
+            _settings = settings;
 
             InitializeDatabase();
         }
@@ -36,37 +38,37 @@ namespace Sejil.Logging.Service
                 using (var conn = new SqliteConnection(_connectionString))
                 {
                     await conn.OpenAsync();
-                    using (var tran = conn.BeginTransaction())
+                    /*using (var tran = conn.BeginTransaction())
+                    {*/
+                    using (var cmdLogEntry = CreateLogEntryInsertCommand(conn))
+                    using (var cmdLogEntryProperty = CreateLogEntryPropertyInsertCommand(conn))
                     {
-                        using (var cmdLogEntry = CreateLogEntryInsertCommand(conn, tran))
-                        using (var cmdLogEntryProperty = CreateLogEntryPropertyInsertCommand(conn, tran))
+                        foreach (var logEvent in events)
                         {
-                            foreach (var logEvent in events)
+                            // Do not log events that were generated from browsing Sejil URL.
+                            /* if (logEvent.Properties.Any(p => (p.Key == "RequestPath" || p.Key == "Path") &&
+                                 p.ToString().Contains(_uri)))
+                             {
+                                 continue;
+                             }*/
+
+                            var logId = await InsertLogEntryAsync(cmdLogEntry, logEvent, sourceApp);
+
+                            /* foreach (KeyValuePair<string, object> item in logEvent.Properties)
+                             {
+                                 var grgg = item;
+                             }*/
+
+                            if (logEvent.Properties != null)
                             {
-                                // Do not log events that were generated from browsing Sejil URL.
-                                /* if (logEvent.Properties.Any(p => (p.Key == "RequestPath" || p.Key == "Path") &&
-                                     p.ToString().Contains(_uri)))
-                                 {
-                                     continue;
-                                 }*/
-
-                                var logId = await InsertLogEntryAsync(cmdLogEntry, logEvent, sourceApp);
-
-                                /* foreach (KeyValuePair<string, object> item in logEvent.Properties)
-                                 {
-                                     var grgg = item;
-                                 }*/
-
-                                if (logEvent.Properties != null)
+                                foreach (KeyValuePair<string, object> property in logEvent.Properties)
                                 {
-                                    foreach (KeyValuePair<string, object> property in logEvent.Properties)
-                                    {
-                                        await InsertLogEntryPropertyAsync(cmdLogEntryProperty, logId, property);
-                                    }
+                                    await InsertLogEntryPropertyAsync(cmdLogEntryProperty, logId, logEvent.Timestamp, property);
                                 }
                             }
                         }
-                        tran.Commit();
+                        /* }
+                         tran.Commit();*/
                     }
                     conn.Close();
                 }
@@ -74,6 +76,22 @@ namespace Sejil.Logging.Service
             catch (Exception e)
             {
                 SelfLog.WriteLine(e.Message);
+            }
+        }
+
+        public async Task CleanupDb()
+        {
+            using (var conn = new SqliteConnection(_connectionString))
+            {
+                conn.Open();
+                var sql = $"DELETE FROM log          WHERE timestamp <= datetime('now', '-{_settings.LogRetentionDays} days');" +
+                          $"DELETE FROM log_property WHERE timestamp <= datetime('now', '-{_settings.LogRetentionDays} days');" +
+                          $"VACUUM;";
+                using (var cmd = conn.CreateCommand())
+                {
+                    cmd.CommandText = sql;
+                   var nb = await cmd.ExecuteNonQueryAsync();
+                }
             }
         }
 
@@ -93,23 +111,31 @@ namespace Sejil.Logging.Service
             return id;
         }
 
-        private async Task InsertLogEntryPropertyAsync(SqliteCommand cmd, string logId, KeyValuePair<string, object> property)
+        private async Task InsertLogEntryPropertyAsync(SqliteCommand cmd, string logId, DateTimeOffset timestamp, KeyValuePair<string, object> property)
         {
             cmd.Parameters["@logId"].Value = logId;
             cmd.Parameters["@name"].Value = property.Key;
-            cmd.Parameters["@value"].Value = StripStringQuotes(JsonConvert.SerializeObject(property.Value)) ?? (object)DBNull.Value;
+            cmd.Parameters["@timestamp"].Value = timestamp.ToUniversalTime();
+            if (property.Value.GetType().Namespace == "System")
+            {
+                cmd.Parameters["@value"].Value = property.Value.ToString();
+            }
+            else
+            {
+                cmd.Parameters["@value"].Value = JsonConvert.SerializeObject(property.Value);
+            }
             await cmd.ExecuteNonQueryAsync();
         }
 
-        private SqliteCommand CreateLogEntryInsertCommand(SqliteConnection conn, SqliteTransaction tran)
+        private SqliteCommand CreateLogEntryInsertCommand(SqliteConnection conn)//, SqliteTransaction tran)
         {
             var sql = "INSERT INTO log (id, sourceApp, message, messageTemplate, level, timestamp, exception)" +
-                "VALUES (@id, @sourceApp, @message, @messageTemplate, @level, @timestamp, @exception);";
+                      "VALUES (@id, @sourceApp, @message, @messageTemplate, @level, @timestamp, @exception);";
 
             var cmd = conn.CreateCommand();
             cmd.CommandText = sql;
             cmd.CommandType = CommandType.Text;
-            cmd.Transaction = tran;
+            //cmd.Transaction = tran;
 
             cmd.Parameters.Add(new SqliteParameter("@id", DbType.String));
             cmd.Parameters.Add(new SqliteParameter("@sourceApp", DbType.String));
@@ -122,19 +148,20 @@ namespace Sejil.Logging.Service
             return cmd;
         }
 
-        private SqliteCommand CreateLogEntryPropertyInsertCommand(SqliteConnection conn, SqliteTransaction tran)
+        private SqliteCommand CreateLogEntryPropertyInsertCommand(SqliteConnection conn)//, SqliteTransaction tran)
         {
-            var sql = "INSERT INTO log_property (logId, name, value)" +
-                "VALUES (@logId, @name, @value);";
+            var sql = "INSERT INTO log_property (logId, name, value, timestamp)" +
+                      "VALUES (@logId, @name, @value, @timestamp);";
 
             var cmd = conn.CreateCommand();
             cmd.CommandText = sql;
             cmd.CommandType = CommandType.Text;
-            cmd.Transaction = tran;
+            //cmd.Transaction = tran;
 
             cmd.Parameters.Add(new SqliteParameter("@logId", DbType.String));
             cmd.Parameters.Add(new SqliteParameter("@name", DbType.String));
             cmd.Parameters.Add(new SqliteParameter("@value", DbType.String));
+            cmd.Parameters.Add(new SqliteParameter("@timestamp", DbType.DateTime2));
 
             return cmd;
         }
@@ -154,9 +181,20 @@ namespace Sejil.Logging.Service
         }
 
         private string StripStringQuotes(string value)
-            => (value?.Length > 0 && value[0] == '"' && value[value.Length - 1] == '"')
-                ? value.Substring(1, value.Length - 2)
-                : value;
+        {
+            if (string.IsNullOrEmpty(value))
+                return value;
+
+            if (value[0] != '{')
+            {
+                return JsonConvert.DeserializeObject<string>(value);
+            }
+
+            return value;
+        }
+        /* => (value?.Length > 0 && value[0] == '"' && value[value.Length - 1] == '"')
+             ? value.Substring(1, value.Length - 2)
+             : value;*/
     }
 
 

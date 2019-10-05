@@ -13,7 +13,6 @@ using Sejil.Models.Internal;
 using Serilog.Context;
 using Microsoft.AspNetCore.Routing;
 using System.Text.Json;
-using Sejil.Configuration;
 
 namespace Sejil
 {

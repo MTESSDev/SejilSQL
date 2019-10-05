@@ -14,7 +14,6 @@ using Serilog.Events;
 using Serilog.Parsing;
 using System.Threading.Tasks;
 using Sejil.Data.Internal;
-using Sejil.Configuration;
 
 namespace Sejil.Test.Logging.Sinks
 {

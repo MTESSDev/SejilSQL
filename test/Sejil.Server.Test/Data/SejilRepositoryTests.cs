@@ -14,7 +14,6 @@ using Xunit;
 using Xunit.Abstractions;
 using Dapper;
 using System.Linq;
-using Sejil.Configuration;
 
 namespace Sejil.Test.Data
 {

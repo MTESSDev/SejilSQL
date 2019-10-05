@@ -12,9 +12,9 @@ namespace Sejil.Data.Internal
 {
     public class SejilSqlProvider : ISejilSqlProvider
     {
-        private readonly string[] _nonPropertyColumns;
+        private readonly ISejilSettings _settings;
 
-        public SejilSqlProvider(ISejilSettings settings) => _nonPropertyColumns = settings.NonPropertyColumns;
+        public SejilSqlProvider(ISejilSettings settings) => _settings = settings;
 
         public string GetSavedQueriesSql()
             => "SELECT * FROM log_query";
@@ -91,8 +91,8 @@ ORDER BY l.timestamp DESC, p.name";
                 String.IsNullOrWhiteSpace(queryFilter?.QueryText)
                     ? ""
                     : timestampWhereClause.Length > 0
-                        ? $"AND ({BuildPredicate(queryFilter.QueryText, _nonPropertyColumns)})"
-                        : $"WHERE ({BuildPredicate(queryFilter.QueryText, _nonPropertyColumns)})";
+                        ? $"AND ({BuildPredicate(queryFilter.QueryText, _settings.NonPropertyColumns)})"
+                        : $"WHERE ({BuildPredicate(queryFilter.QueryText, _settings.NonPropertyColumns)})";
 
             string FiltersWhereClause() =>
                 String.IsNullOrWhiteSpace(queryFilter?.LevelFilter) && (!queryFilter?.ExceptionsOnly ?? true)
@@ -302,5 +302,6 @@ ORDER BY l.timestamp DESC, p.name";
                 return value;
             }
         }
+
     }
 }

@@ -26,5 +26,7 @@ namespace Sejil.Configuration
         /// Gets or sets the authentication scheme, used for the index page. Leave empty for no authentication.
         /// </summary>
         string AuthenticationScheme { get; set; }
+
+        int LogRetentionDays { get; set; }
     }
 }
