@@ -25,7 +25,7 @@ This version let you centralize all your applications logs in one place.
     ```csharp
     public static IWebHost BuildWebHost(string[] args) =>
         WebHost.CreateDefaultBuilder(args)
-            .AddSejil("/sejil", LogLevel.Debug)
+            .AddSejil(new SejilSettings("/sejil", LogEventLevel.Debug));
             // ...
     ```
 
