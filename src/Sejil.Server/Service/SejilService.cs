@@ -116,7 +116,7 @@ namespace Sejil.Service
             cmd.Parameters["@logId"].Value = logId;
             cmd.Parameters["@name"].Value = property.Key;
             cmd.Parameters["@timestamp"].Value = timestamp.ToUniversalTime();
-            if (property.Value.GetType().Namespace == "System")
+            if (!(property.Value is null) && property.Value.GetType().Namespace == "System")
             {
                 cmd.Parameters["@value"].Value = property.Value.ToString();
             }

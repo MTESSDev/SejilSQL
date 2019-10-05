@@ -21935,7 +21935,7 @@
                         })
                     }, t.prototype.render = function () {
                         var e = this.props.entry,
-                            t = new Date(e.timestamp).toISOString().replace("T", " ").replace("Z", ""),
+                            t = e.timestamp.replace("T", " ").replace("Z", "").substring(0,23),
                             n = "level level-" + e.level.toLowerCase(),
                             r = "log level-" + e.level.toLowerCase() + " " + (this.state.collapsed ? "collapsed" : "expanded")
 
