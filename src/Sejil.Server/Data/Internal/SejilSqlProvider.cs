@@ -47,9 +47,9 @@ $@"SELECT l.*, p.* from
     {timestampWhereClause}
     {queryWhereClause}{FiltersWhereClause()}
     ORDER BY timestamp DESC
-    LIMIT {pageSize} OFFSET {(page - 1) * pageSize}
+    LIMIT {pageSize}
 ) l
-LEFT JOIN log_property p ON l.id = p.logId
+LEFT JOIN log_property p ON l.timestamp = p.timestamp AND l.id = p.logId
 ORDER BY l.timestamp DESC, p.name";
 
             string TimestampWhereClause()
@@ -66,7 +66,7 @@ ORDER BY l.timestamp DESC, p.name";
 
                 if (hasStartingTimestampConstraint)
                 {
-                    sql.Append($@"timestamp <= '{startingTimestamp.Value.ToString("yyyy-MM-dd HH:mm:ss.fff")}'");
+                    sql.Append($@"timestamp < '{startingTimestamp.Value.ToUniversalTime().ToString("yyyy-MM-dd HH:mm:ss.fff")}'");
                 }
 
                 if (hasStartingTimestampConstraint && hasDateFilter)

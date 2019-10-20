@@ -60,7 +60,7 @@ namespace Sejil.Data.Internal
             using (var conn = new SqliteConnection(_connectionString))
             {
                 await conn.OpenAsync();
-                var lookup = new Dictionary<string, LogEntry>();
+                var lookup = new Dictionary<long, LogEntry>();
 
                 var data = conn.Query<LogEntry, LogEntryProperty, LogEntry>(sql, (l, p) =>
                     {
@@ -76,7 +76,7 @@ namespace Sejil.Data.Internal
                         }
                         return logEntry;
 
-                    }).ToList();
+                    }, splitOn: "Id, timestamp");
 
                 return lookup.Values.AsEnumerable();
             }

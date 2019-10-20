@@ -8,7 +8,7 @@ namespace Sejil.Models.Internal
 {
     public class LogEntry
     {
-        public string Id { get; set; }
+        public long Id { get; set; }
         public string Message { get; set; }
         public string SourceApp { get; set; }
         public string MessageTemplate { get; set; }

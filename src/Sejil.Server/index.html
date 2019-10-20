@@ -30949,7 +30949,7 @@
                                             return a.loading = !1
                                         }), t.ok ? [4, t.json()] : (this.onEventsLoadError && this.onEventsLoadError(t), [2]);
                                     case 3:
-                                        return (n = s.sent()).length && (this.startingTimestamp || (this.startingTimestamp = n[0].timestamp), Object(r.k)("load entries", function () {
+                                        return (n = s.sent()).length && ((this.startingTimestamp = n[n.length-1].timestamp), Object(r.k)("load entries", function () {
                                             return a.logEntries = a.logEntries.concat(n)
                                         }), this.page++), [3, 5];
                                     case 4:
