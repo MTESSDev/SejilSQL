@@ -79,7 +79,7 @@ namespace Sejil.Test.Configuration
             var settings = new SejilSettings("", LogEventLevel.Debug);
 
             // Assert
-            Assert.Equal(new[] { "message", "messageTemplate", "level", "timestamp", "exception" },
+            Assert.Equal(new[] { "message", "messagetemplate", "level", "timestamp", "exception", "sourceapp" },
                 settings.NonPropertyColumns);
             Assert.Equal(100, settings.PageSize);
         }

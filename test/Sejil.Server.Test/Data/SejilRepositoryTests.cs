@@ -14,6 +14,7 @@ using Xunit;
 using Xunit.Abstractions;
 using Dapper;
 using System.Linq;
+using Serilog.Events;
 
 namespace Sejil.Test.Data
 {
@@ -130,8 +131,8 @@ namespace Sejil.Test.Data
                 for (var i = 0; i < 10; i++)
                 {
                     using var cmd = conn.CreateCommand();
-                    cmd.CommandText = $@"INSERT INTO log (id, message, messageTemplate, level, timestamp) 
-                        VALUES ('{Guid.NewGuid().ToString()}', '{i}', '{i}', 'info', datetime(CURRENT_TIMESTAMP,'+{i} Hour'))";
+                    cmd.CommandText = $@"INSERT INTO log (message, messageTemplate, level, timestamp, sourceApp) 
+                        VALUES ('{i}', '{i}', {(int)LogEventLevel.Information}, datetime(CURRENT_TIMESTAMP,'+{i} Hour'), 'Test')";
                     cmd.ExecuteNonQuery();
                 }
             }

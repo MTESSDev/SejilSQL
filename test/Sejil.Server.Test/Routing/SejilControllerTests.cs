@@ -310,14 +310,14 @@ namespace Sejil.Test.Routing
             {
                 new LogEntry
                 {
-                    Id = "001",
+                    Id = 001,
                     Message = "message",
                     MessageTemplate = "message template",
                     Properties = new List<LogEntryProperty>
                     {
                         new LogEntryProperty
                         {
-                            Id = 1,
+                            LogId = 1,
                             Name = "prop1",
                             Value = "value1"
                         }
