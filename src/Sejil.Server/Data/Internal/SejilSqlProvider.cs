@@ -7,6 +7,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using Sejil.Configuration;
 using Sejil.Models.Internal;
+using Serilog.Events;
 
 namespace Sejil.Data.Internal
 {
@@ -108,7 +109,7 @@ ORDER BY l.timestamp DESC, p.name";
 
             if (!String.IsNullOrWhiteSpace(levelFilter))
             {
-                sp.AppendFormat("level = '{0}'", levelFilter);
+                sp.AppendFormat("level = {0}", (int)Enum.Parse(typeof(LogEventLevel), levelFilter));
             }
 
             if (exceptionsOnly && sp.Length > 0)
@@ -162,7 +163,7 @@ ORDER BY l.timestamp DESC, p.name";
                                     if (nonPropertyColumns.Contains(split[0].ToLower()))
                                     {
                                         sql.AppendFormat("{0} {1} \'{2}\'",
-                                            split[0], split[1].ToUpper().Trim(), split[2].Trim('"',' ','\''));
+                                            split[0], split[1].ToUpper().Trim(), split[2].Trim('"', ' ', '\''));
                                     }
                                     else
                                     {

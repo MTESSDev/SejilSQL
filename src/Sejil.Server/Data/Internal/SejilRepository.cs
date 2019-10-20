@@ -12,6 +12,7 @@ using Dapper;
 using Microsoft.Data.Sqlite;
 using Sejil.Configuration;
 using Sejil.Models.Internal;
+using Serilog.Events;
 
 namespace Sejil.Data.Internal
 {
@@ -67,6 +68,7 @@ namespace Sejil.Data.Internal
                         LogEntry logEntry;
                         if (!lookup.TryGetValue(l.Id, out logEntry))
                         {
+                            l.Level = Enum.Parse(typeof(LogEventLevel), l.Level).ToString();
                             lookup.Add(l.Id, logEntry = l);
                         }
 

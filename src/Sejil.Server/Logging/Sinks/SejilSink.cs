@@ -71,22 +71,18 @@ namespace Sejil.Logging.Sinks
             }
         }
 
-        private async Task<string> InsertLogEntryAsync(SqliteCommand cmd, LogEvent log)
+        private async Task<long> InsertLogEntryAsync(SqliteCommand cmd, LogEvent log)
         {
-            var id = Guid.NewGuid().ToString();
-
-            cmd.Parameters["@id"].Value = id;
             cmd.Parameters["@message"].Value = log.MessageTemplate.Render(log.Properties);
             cmd.Parameters["@messageTemplate"].Value = log.MessageTemplate.Text;
-            cmd.Parameters["@level"].Value = log.Level.ToString();
+            cmd.Parameters["@level"].Value = (int)log.Level;
             cmd.Parameters["@timestamp"].Value = log.Timestamp.ToUniversalTime();
             cmd.Parameters["@exception"].Value = log.Exception?.Demystify().ToString() ?? (object)DBNull.Value;
 
-            await cmd.ExecuteNonQueryAsync();
-            return id;
+            return (long)(await cmd.ExecuteScalarAsync());
         }
 
-        private async Task InsertLogEntryPropertyAsync(SqliteCommand cmd, string logId, KeyValuePair<string, LogEventPropertyValue> property)
+        private async Task InsertLogEntryPropertyAsync(SqliteCommand cmd, long logId, KeyValuePair<string, LogEventPropertyValue> property)
         {
             cmd.Parameters["@logId"].Value = logId;
             cmd.Parameters["@name"].Value = property.Key;
@@ -104,10 +100,10 @@ namespace Sejil.Logging.Sinks
             cmd.CommandType = CommandType.Text;
             cmd.Transaction = tran;
 
-            cmd.Parameters.Add(new SqliteParameter("@id", DbType.String));
+            cmd.Parameters.Add(new SqliteParameter("@id", DbType.Int64));
             cmd.Parameters.Add(new SqliteParameter("@message", DbType.String));
             cmd.Parameters.Add(new SqliteParameter("@messageTemplate", DbType.String));
-            cmd.Parameters.Add(new SqliteParameter("@level", DbType.String));
+            cmd.Parameters.Add(new SqliteParameter("@level", DbType.Int32));
             cmd.Parameters.Add(new SqliteParameter("@timestamp", DbType.DateTime2));
             cmd.Parameters.Add(new SqliteParameter("@exception", DbType.String));
 
@@ -124,7 +120,7 @@ namespace Sejil.Logging.Sinks
             cmd.CommandType = CommandType.Text;
             cmd.Transaction = tran;
 
-            cmd.Parameters.Add(new SqliteParameter("@logId", DbType.String));
+            cmd.Parameters.Add(new SqliteParameter("@logId", DbType.Int64));
             cmd.Parameters.Add(new SqliteParameter("@name", DbType.String));
             cmd.Parameters.Add(new SqliteParameter("@value", DbType.String));
 

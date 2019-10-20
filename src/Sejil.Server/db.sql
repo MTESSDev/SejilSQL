@@ -7,15 +7,13 @@ CREATE TABLE IF NOT EXISTS log(
 	sourceApp TEXT NOT NULL collate nocase,
 	message TEXT NOT NULL collate nocase,
 	messageTemplate TEXT NOT NULL collate nocase,
-	level VARCHAR(64) NOT NULL collate nocase,
+	level INTEGER NOT NULL,
 	exception TEXT NULL collate nocase
 );
 
 CREATE INDEX IF NOT EXISTS log_timestamp_idx ON log(timestamp);
 
 CREATE INDEX IF NOT EXISTS log_sourceApp_idx ON log(sourceApp collate nocase);
-
-CREATE INDEX IF NOT EXISTS log_level_idx ON log(level collate nocase);
 
 CREATE TABLE IF NOT EXISTS log_property(
 	logId INTEGER NOT NULL,

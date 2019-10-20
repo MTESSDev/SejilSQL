@@ -100,7 +100,7 @@ namespace Sejil.Service
             cmd.Parameters["@sourceApp"].Value = sourceApp;
             cmd.Parameters["@message"].Value = log.RenderedMessage; //.MessageTemplate.Render(log.Properties);
             cmd.Parameters["@messageTemplate"].Value = log.MessageTemplate;
-            cmd.Parameters["@level"].Value = log.Level.ToString();
+            cmd.Parameters["@level"].Value = (int)log.Level;
             cmd.Parameters["@timestamp"].Value = log.Timestamp.ToUniversalTime();
             cmd.Parameters["@exception"].Value = log.Exception ?? (object)DBNull.Value; //log.Exception?.Demystify().ToString() ?? (object)DBNull.Value;
 
@@ -135,7 +135,7 @@ namespace Sejil.Service
             cmd.Parameters.Add(new SqliteParameter("@sourceApp", DbType.String));
             cmd.Parameters.Add(new SqliteParameter("@message", DbType.String));
             cmd.Parameters.Add(new SqliteParameter("@messageTemplate", DbType.String));
-            cmd.Parameters.Add(new SqliteParameter("@level", DbType.String));
+            cmd.Parameters.Add(new SqliteParameter("@level", DbType.Int32));
             cmd.Parameters.Add(new SqliteParameter("@timestamp", DbType.DateTime2));
             cmd.Parameters.Add(new SqliteParameter("@exception", DbType.String));
 
