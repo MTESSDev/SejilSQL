@@ -38,11 +38,15 @@ namespace Sejil.Service
                 using (var conn = new SqliteConnection(_connectionString))
                 {
                     await conn.OpenAsync();
+
                     /*using (var tran = conn.BeginTransaction())
                     {*/
+                    using (var memory = CreateJournalMemoryCommand(conn))
                     using (var cmdLogEntry = CreateLogEntryInsertCommand(conn))
                     using (var cmdLogEntryProperty = CreateLogEntryPropertyInsertCommand(conn))
                     {
+                        await memory.ExecuteNonQueryAsync();
+
                         foreach (var logEvent in events)
                         {
                             // Do not log events that were generated from browsing Sejil URL.
@@ -104,7 +108,7 @@ namespace Sejil.Service
             cmd.Parameters["@timestamp"].Value = log.Timestamp.ToUniversalTime();
             cmd.Parameters["@exception"].Value = log.Exception ?? (object)DBNull.Value; //log.Exception?.Demystify().ToString() ?? (object)DBNull.Value;
 
-            return (long)(await cmd.ExecuteScalarAsync());
+            return (long)await cmd.ExecuteScalarAsync(); ;
         }
 
         private async Task InsertLogEntryPropertyAsync(SqliteCommand cmd, long logId, DateTimeOffset timestamp, KeyValuePair<string, object> property)
@@ -123,10 +127,20 @@ namespace Sejil.Service
             await cmd.ExecuteNonQueryAsync();
         }
 
+        private SqliteCommand CreateJournalMemoryCommand(SqliteConnection conn)//, SqliteTransaction tran)
+        {
+            var sql = "PRAGMA journal_mode =  MEMORY;";
+
+            var cmd = conn.CreateCommand();
+            cmd.CommandText = sql;
+            cmd.CommandType = CommandType.Text;
+
+            return cmd;
+        }
+
         private SqliteCommand CreateLogEntryInsertCommand(SqliteConnection conn)//, SqliteTransaction tran)
         {
-            var sql = "PRAGMA journal_mode =  MEMORY;" +
-                      "INSERT INTO log (sourceApp, message, messageTemplate, level, timestamp, exception)" +
+            var sql = "INSERT INTO log (sourceApp, message, messageTemplate, level, timestamp, exception)" +
                       "VALUES (@sourceApp, @message, @messageTemplate, @level, @timestamp, @exception); select last_insert_rowid();";
 
             var cmd = conn.CreateCommand();
@@ -145,8 +159,7 @@ namespace Sejil.Service
 
         private SqliteCommand CreateLogEntryPropertyInsertCommand(SqliteConnection conn)//, SqliteTransaction tran)
         {
-            var sql = "PRAGMA journal_mode =  MEMORY;" +
-                      "INSERT INTO log_property (logId, name, value, timestamp)" +
+            var sql = "INSERT INTO log_property (logId, name, value, timestamp)" +
                       "VALUES (@logId, @name, @value, @timestamp);";
 
             var cmd = conn.CreateCommand();
