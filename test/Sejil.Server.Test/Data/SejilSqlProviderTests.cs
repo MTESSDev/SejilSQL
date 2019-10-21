@@ -140,9 +140,9 @@ ORDER BY l.timestamp DESC, p.name", sql);
     
     
     ORDER BY timestamp DESC
-    LIMIT 100 OFFSET 100
+    LIMIT 100
 ) l
-LEFT JOIN log_property p ON l.id = p.logId
+LEFT JOIN log_property p ON l.timestamp = p.timestamp AND l.id = p.logId
 ORDER BY l.timestamp DESC, p.name", sql);
         }
 
@@ -161,12 +161,12 @@ ORDER BY l.timestamp DESC, p.name", sql);
 @"SELECT l.*, p.* from 
 (
     SELECT * FROM log
-    WHERE (timestamp <= '2017-08-03 14:56:33.876')
+    WHERE (timestamp < '2017-08-03 18:56:33.876')
     
     ORDER BY timestamp DESC
-    LIMIT 100 OFFSET 100
+    LIMIT 100
 ) l
-LEFT JOIN log_property p ON l.id = p.logId
+LEFT JOIN log_property p ON l.timestamp = p.timestamp AND l.id = p.logId
 ORDER BY l.timestamp DESC, p.name", sql);
         }
 
@@ -185,12 +185,12 @@ ORDER BY l.timestamp DESC, p.name", sql);
 @"SELECT l.*, p.* from 
 (
     SELECT * FROM log
-    WHERE (timestamp <= '2017-08-03 14:56:33.876' AND timestamp >= datetime('now', '-5 Minute'))
+    WHERE (timestamp < '2017-08-03 18:56:33.876' AND timestamp >= datetime('now', '-5 Minute'))
     
     ORDER BY timestamp DESC
-    LIMIT 100 OFFSET 100
+    LIMIT 100
 ) l
-LEFT JOIN log_property p ON l.id = p.logId
+LEFT JOIN log_property p ON l.timestamp = p.timestamp AND l.id = p.logId
 ORDER BY l.timestamp DESC, p.name", sql);
         }
 

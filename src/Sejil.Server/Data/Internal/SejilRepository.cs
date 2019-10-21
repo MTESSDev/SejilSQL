@@ -74,6 +74,7 @@ namespace Sejil.Data.Internal
 
                         if (p != null)
                         {
+                            p.LogId = l.Id;
                             logEntry.Properties.Add(p);
                         }
                         return logEntry;

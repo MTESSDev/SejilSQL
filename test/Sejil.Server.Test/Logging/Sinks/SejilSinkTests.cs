@@ -50,42 +50,46 @@ namespace Sejil.Test.Logging.Sinks
 
             // Assert
             var columns = GetColumns(db, "log");
-            var fks = GetForeignKeyColumns(db, "log");
 
-            Assert.Equal(6, columns.Count());
-            Assert.Empty(fks);
+            Assert.Equal(7, columns.Count());
 
             var idCol = columns.ElementAt(0);
             Assert.Equal("id", idCol.Name);
-            Assert.Equal("TEXT", idCol.Type);
+            Assert.Equal("INTEGER", idCol.Type);
             Assert.True(idCol.NotNull);
             Assert.True(idCol.Pk);
 
-            var messageCol = columns.ElementAt(1);
-            Assert.Equal("message", messageCol.Name);
-            Assert.Equal("TEXT", messageCol.Type);
-            Assert.True(messageCol.NotNull);
-            Assert.False(messageCol.Pk);
-
-            var messageTemplateCol = columns.ElementAt(2);
-            Assert.Equal("messageTemplate", messageTemplateCol.Name);
-            Assert.Equal("TEXT", messageTemplateCol.Type);
-            Assert.True(messageTemplateCol.NotNull);
-            Assert.False(messageTemplateCol.Pk);
-
-            var levelCol = columns.ElementAt(3);
-            Assert.Equal("level", levelCol.Name);
-            Assert.Equal("VARCHAR(64)", levelCol.Type);
-            Assert.True(levelCol.NotNull);
-            Assert.False(levelCol.Pk);
-
-            var timestampCol = columns.ElementAt(4);
+            var timestampCol = columns.ElementAt(1);
             Assert.Equal("timestamp", timestampCol.Name);
             Assert.Equal("DATETIME", timestampCol.Type);
             Assert.True(timestampCol.NotNull);
             Assert.False(timestampCol.Pk);
 
-            var exceptionCol = columns.ElementAt(5);
+            var sourceAppCol = columns.ElementAt(2);
+            Assert.Equal("sourceApp", sourceAppCol.Name);
+            Assert.Equal("TEXT", sourceAppCol.Type);
+            Assert.True(sourceAppCol.NotNull);
+            Assert.False(sourceAppCol.Pk);
+
+            var messageCol = columns.ElementAt(3);
+            Assert.Equal("message", messageCol.Name);
+            Assert.Equal("TEXT", messageCol.Type);
+            Assert.True(messageCol.NotNull);
+            Assert.False(messageCol.Pk);
+
+            var messageTemplateCol = columns.ElementAt(4);
+            Assert.Equal("messageTemplate", messageTemplateCol.Name);
+            Assert.Equal("TEXT", messageTemplateCol.Type);
+            Assert.True(messageTemplateCol.NotNull);
+            Assert.False(messageTemplateCol.Pk);
+
+            var levelCol = columns.ElementAt(5);
+            Assert.Equal("level", levelCol.Name);
+            Assert.Equal("INTEGER", levelCol.Type);
+            Assert.True(levelCol.NotNull);
+            Assert.False(levelCol.Pk);
+
+            var exceptionCol = columns.ElementAt(6);
             Assert.Equal("exception", exceptionCol.Name);
             Assert.Equal("TEXT", exceptionCol.Type);
             Assert.False(exceptionCol.NotNull);
@@ -105,22 +109,20 @@ namespace Sejil.Test.Logging.Sinks
 
             // Assert
             var columns = GetColumns(db, "log_property");
-            var fks = GetForeignKeyColumns(db, "log_property");
 
             Assert.Equal(4, columns.Count());
-            Assert.Single(fks);
 
-            var idCol = columns.ElementAt(0);
-            Assert.Equal("id", idCol.Name);
-            Assert.Equal("INTEGER", idCol.Type);
-            Assert.True(idCol.NotNull);
-            Assert.True(idCol.Pk);
-
-            var logIdCol = columns.ElementAt(1);
+            var logIdCol = columns.ElementAt(0);
             Assert.Equal("logId", logIdCol.Name);
-            Assert.Equal("TEXT", logIdCol.Type);
+            Assert.Equal("INTEGER", logIdCol.Type);
             Assert.True(logIdCol.NotNull);
             Assert.False(logIdCol.Pk);
+
+            var timestampCol = columns.ElementAt(1);
+            Assert.Equal("timestamp", timestampCol.Name);
+            Assert.Equal("DATETIME", timestampCol.Type);
+            Assert.True(timestampCol.NotNull);
+            Assert.False(timestampCol.Pk);
 
             var nameCol = columns.ElementAt(2);
             Assert.Equal("name", nameCol.Name);
@@ -134,10 +136,6 @@ namespace Sejil.Test.Logging.Sinks
             Assert.False(valueCol.NotNull);
             Assert.False(valueCol.Pk);
 
-            var fkCol = fks.ElementAt(0);
-            Assert.Equal("log", fkCol.Table);
-            Assert.Equal("logId", fkCol.From);
-            Assert.Equal("id", fkCol.To);
         }
 
         [Fact]
