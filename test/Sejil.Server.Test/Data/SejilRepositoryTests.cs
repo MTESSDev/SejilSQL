@@ -5,18 +5,18 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Threading.Tasks;
-using Microsoft.Data.Sqlite;
 using Moq;
-using Sejil.Configuration;
-using Sejil.Data.Internal;
-using Sejil.Models.Internal;
+using SejilSQL.Configuration;
+using SejilSQL.Data.Internal;
+using SejilSQL.Models.Internal;
 using Xunit;
 using Xunit.Abstractions;
 using Dapper;
 using System.Linq;
 using Serilog.Events;
+using System.Data.SqlClient;
 
-namespace Sejil.Test.Data
+namespace SejilSQL.Test.Data
 {
     public class SejilRepositoryTests
     {
@@ -27,7 +27,7 @@ namespace Sejil.Test.Data
             var db = Guid.NewGuid().ToString();
             InitializeDatabse(db);
             var settingsMoq = new Mock<ISejilSettings>();
-            settingsMoq.SetupGet(p => p.SqliteDbPath).Returns(db);
+            settingsMoq.SetupGet(p => p.ConnectionString).Returns(db);
             var repository = new SejilRepository(new SejilSqlProvider(settingsMoq.Object), settingsMoq.Object);
 
             var logQuery = new LogQuery
@@ -56,7 +56,7 @@ namespace Sejil.Test.Data
             var db = Guid.NewGuid().ToString();
             InitializeDatabse(db);
             var settingsMoq = new Mock<ISejilSettings>();
-            settingsMoq.SetupGet(p => p.SqliteDbPath).Returns(db);
+            settingsMoq.SetupGet(p => p.ConnectionString).Returns(db);
             var repository = new SejilRepository(new SejilSqlProvider(settingsMoq.Object), settingsMoq.Object);
             await repository.SaveQueryAsync(new LogQuery { Name = "Test1", Query = "q1" });
             await repository.SaveQueryAsync(new LogQuery { Name = "Test2", Query = "q2" });
@@ -81,7 +81,7 @@ namespace Sejil.Test.Data
             var db = Guid.NewGuid().ToString();
             InitializeDatabse(db);
             var settingsMoq = new Mock<ISejilSettings>();
-            settingsMoq.SetupGet(p => p.SqliteDbPath).Returns(db);
+            settingsMoq.SetupGet(p => p.ConnectionString).Returns(db);
             var repository = new SejilRepository(new SejilSqlProvider(settingsMoq.Object), settingsMoq.Object);
             await repository.SaveQueryAsync(new LogQuery { Name = "Test1", Query = "q1" });
 
@@ -101,7 +101,7 @@ namespace Sejil.Test.Data
             var db = Guid.NewGuid().ToString();
             InitializeDatabse(db);
             var settingsMoq = new Mock<ISejilSettings>();
-            settingsMoq.SetupGet(p => p.SqliteDbPath).Returns(db);
+            settingsMoq.SetupGet(p => p.ConnectionString).Returns(db);
             var repository = new SejilRepository(new SejilSqlProvider(settingsMoq.Object), settingsMoq.Object);
             await repository.SaveQueryAsync(new LogQuery { Name = "Test1", Query = "q1" });
 
@@ -120,12 +120,12 @@ namespace Sejil.Test.Data
             // Arrange
             var db = Guid.NewGuid().ToString();
             var settingsMoq = new Mock<ISejilSettings>();
-            settingsMoq.SetupGet(p => p.SqliteDbPath).Returns(db);
+            settingsMoq.SetupGet(p => p.ConnectionString).Returns(db);
             settingsMoq.SetupGet(p => p.PageSize).Returns(3);
             InitializeDatabse(db);
             var repository = new SejilRepository(new SejilSqlProvider(settingsMoq.Object), settingsMoq.Object);
 
-            using (var conn = new SqliteConnection($"DataSource={db}"))
+            using (var conn = new SqlConnection($"DataSource={db}"))
             {
                 conn.Open();
                 for (var i = 0; i < 10; i++)
@@ -156,18 +156,18 @@ namespace Sejil.Test.Data
             // Arrange
             var db = Guid.NewGuid().ToString();
             var settingsMoq = new Mock<ISejilSettings>();
-            settingsMoq.SetupGet(p => p.SqliteDbPath).Returns(db);
+            settingsMoq.SetupGet(p => p.ConnectionString).Returns(db);
             settingsMoq.SetupGet(p => p.PageSize).Returns(3);
             InitializeDatabse(db);
             var repository = new SejilRepository(new SejilSqlProvider(settingsMoq.Object), settingsMoq.Object);
 
-            using (var conn = new SqliteConnection($"DataSource={db}"))
+            using (var conn = new SqlConnection($"DataSource={db}"))
             {
                 conn.Open();
                 for (var i = 0; i < 10; i++)
                 {
                     var id = Guid.NewGuid().ToString();
-                    var cmd = new SqliteCommand($@"INSERT INTO log (id, message, messageTemplate, level, timestamp) 
+                    var cmd = new SqlCommand($@"INSERT INTO log (id, message, messageTemplate, level, timestamp) 
                         VALUES ('{id}', '{i}', '{i}', 'info', datetime(CURRENT_TIMESTAMP,'+{i} Hour'))", conn);
                     cmd.ExecuteNonQuery();
 
@@ -194,10 +194,10 @@ namespace Sejil.Test.Data
 
         private void InitializeDatabse(string path)
         {
-            using var conn = new SqliteConnection($"DataSource={path}");
+            using var conn = new SqlConnection($"DataSource={path}");
             conn.Open();
             var sql = ResourceHelper.GetEmbeddedResource("Sejil.db.sql");
-            var cmd = new SqliteCommand(sql, conn);
+            var cmd = new SqlCommand(sql, conn);
             cmd.ExecuteNonQuery();
         }
     }

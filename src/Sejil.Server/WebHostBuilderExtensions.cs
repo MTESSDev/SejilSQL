@@ -6,12 +6,13 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 using Serilog.Events;
-using Sejil.Data.Internal;
-using Sejil.Routing.Internal;
-using Sejil.Configuration;
-using Sejil.Logging;
+using SejilSQL.Data.Internal;
+using SejilSQL.Routing.Internal;
+using SejilSQL.Configuration;
+using SejilSQL.Logging;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Configuration;
 
 namespace Microsoft.AspNetCore.Hosting
 {
@@ -26,16 +27,16 @@ namespace Microsoft.AspNetCore.Hosting
         /// <returns></returns>
         public static IWebHostBuilder AddSejil(this IWebHostBuilder builder, ISejilSettings settings)
         {
-              return builder
-                //.ConfigureLogging((logging) => logging.AddSerilog(CreateLogger(settings)))
-                .ConfigureServices(services =>
-                {
-                    services.TryAddSingleton<IHttpContextAccessor, HttpContextAccessor>();
-                    services.AddSingleton(settings);
-                    services.AddScoped<ISejilRepository, SejilRepository>();
-                    services.AddScoped<ISejilSqlProvider, SejilSqlProvider>();
-                    services.AddScoped<ISejilController, SejilController>();
-                });
+            return builder
+              .ConfigureLogging((logging) => logging.AddSerilog(CreateLogger(settings)))
+              .ConfigureServices(services =>
+              {
+                  services.TryAddSingleton<IHttpContextAccessor, HttpContextAccessor>();
+                  services.AddSingleton(settings);
+                  services.AddScoped<ISejilRepository, SejilRepository>();
+                  services.AddScoped<ISejilSqlProvider, SejilSqlProvider>();
+                  services.AddScoped<ISejilController, SejilController>();
+              });
         }
 
         private static Serilog.Core.Logger CreateLogger(ISejilSettings settings)
@@ -45,7 +46,6 @@ namespace Microsoft.AspNetCore.Hosting
                 .WriteTo.Sejil(settings)
                 .CreateLogger();
 
- 
     }
 
     public static class SejilTools

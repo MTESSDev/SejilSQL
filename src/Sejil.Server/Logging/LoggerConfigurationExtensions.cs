@@ -3,15 +3,15 @@
 
 using System;
 using System.IO;
-using Sejil;
-using Sejil.Configuration;
-using Sejil.Logging.Sinks;
+using SejilSQL;
+using SejilSQL.Configuration;
+using SejilSQL.Logging.Sinks;
 using Serilog;
 using Serilog.Configuration;
 using Serilog.Debugging;
 using Serilog.Events;
 
-namespace Sejil.Logging
+namespace SejilSQL.Logging
 {
     internal static class LoggerConfigurationExtensions
     {
@@ -22,8 +22,8 @@ namespace Sejil.Logging
         {
             try
             {
-                var sqliteDbFile = new FileInfo(settings.SqliteDbPath);
-                sqliteDbFile.Directory.Create();
+                //var sqliteDbFile = new FileInfo(settings.SqliteDbPath);
+                //sqliteDbFile.Directory.Create();
 
                 return loggerConfiguration.Sink(
                     new SejilSink(settings),

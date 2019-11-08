@@ -10,13 +10,13 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
-using Sejil.Configuration;
-using Sejil.Models.Internal;
-using Sejil.Routing.Internal;
+using SejilSQL.Configuration;
+using SejilSQL.Models.Internal;
+using SejilSQL.Routing.Internal;
 using Serilog.Events;
 using Xunit;
 using Microsoft.AspNetCore.Builder;
-using Sejil.Data.Internal;
+using SejilSQL.Data.Internal;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.Logging;
@@ -26,7 +26,7 @@ using System.Security.Claims;
 using System.Net;
 using System.Text.Json;
 
-namespace Sejil.Test
+namespace SejilSQL.Test
 {
     public class ApplicationBuilderExtensionsTests
     {

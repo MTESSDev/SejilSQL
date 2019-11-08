@@ -1,12 +1,12 @@
 ﻿using Microsoft.Extensions.Hosting;
-using Sejil.Configuration;
+using SejilSQL.Configuration;
 using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Sejil.Service
+namespace SejilSQL.Service
 {
   public  class SejilCleanupService : BackgroundService
     {
@@ -15,7 +15,7 @@ namespace Sejil.Service
 
         public SejilCleanupService(ISejilSettings settings, SejilService sejilService)
         {
-            _connectionString = $"DataSource={settings.SqliteDbPath}";
+            _connectionString = settings.ConnectionString;
             _sejilService = sejilService;
             //InitializeDatabase();
         }

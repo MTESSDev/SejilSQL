@@ -6,17 +6,17 @@ using System.Linq;
 using System.Collections.Generic;
 using System.Data;
 using System.Threading.Tasks;
-using Microsoft.Data.Sqlite;
 using Serilog.Core;
 using Serilog.Debugging;
 using Serilog.Events;
 using Serilog.Sinks.PeriodicBatching;
-using Sejil.Configuration;
+using SejilSQL.Configuration;
 using System.Diagnostics;
 using System.Dynamic;
 using Newtonsoft.Json;
+using System.Data.SqlClient;
 
-namespace Sejil.Service
+namespace SejilSQL.Service
 {
     public class SejilService
     {
@@ -25,27 +25,27 @@ namespace Sejil.Service
 
         public SejilService(ISejilSettings settings)
         {
-            _connectionString = $"DataSource={settings.SqliteDbPath}";
+            _connectionString = settings.ConnectionString;
             _settings = settings;
 
-            InitializeDatabase();
+            //InitializeDatabase();
         }
 
         public async Task EmitBatchAsync(IEnumerable<Event> events, string sourceApp)
         {
             try
             {
-                using (var conn = new SqliteConnection(_connectionString))
+                using (var conn = new SqlConnection(_connectionString))
                 {
                     await conn.OpenAsync();
 
                     /*using (var tran = conn.BeginTransaction())
                     {*/
-                    using (var memory = CreateJournalMemoryCommand(conn))
+                    //using (var memory = CreateJournalMemoryCommand(conn))
                     using (var cmdLogEntry = CreateLogEntryInsertCommand(conn))
                     using (var cmdLogEntryProperty = CreateLogEntryPropertyInsertCommand(conn))
                     {
-                        await memory.ExecuteNonQueryAsync();
+                        //await memory.ExecuteNonQueryAsync();
 
                         foreach (var logEvent in events)
                         {
@@ -85,12 +85,11 @@ namespace Sejil.Service
 
         public async Task CleanupDb()
         {
-            using (var conn = new SqliteConnection(_connectionString))
+            using (var conn = new SqlConnection(_connectionString))
             {
                 conn.Open();
-                var sql = $"DELETE FROM log          WHERE timestamp <= datetime('now', '-{_settings.LogRetentionDays} days');" +
-                          $"DELETE FROM log_property WHERE timestamp <= datetime('now', '-{_settings.LogRetentionDays} days');" +
-                          $"VACUUM;";
+                var sql = $"DELETE FROM [JOURNAL].log          WHERE timestamp <= DATEADD(day, -{_settings.LogRetentionDays}, GETDATE());" +
+                          $"DELETE FROM [JOURNAL].log_property WHERE timestamp <= DATEADD(day, -{_settings.LogRetentionDays}, GETDATE());";
                 using (var cmd = conn.CreateCommand())
                 {
                     cmd.CommandText = sql;
@@ -99,23 +98,22 @@ namespace Sejil.Service
             }
         }
 
-        private async Task<long> InsertLogEntryAsync(SqliteCommand cmd, Event log, string sourceApp)
+        private async Task<long> InsertLogEntryAsync(SqlCommand cmd, Event log, string sourceApp)
         {
             cmd.Parameters["@sourceApp"].Value = sourceApp;
-            cmd.Parameters["@message"].Value = log.RenderedMessage; //.MessageTemplate.Render(log.Properties);
-            cmd.Parameters["@messageTemplate"].Value = log.MessageTemplate;
+            cmd.Parameters["@message"].Value = log.RenderedMessage; 
             cmd.Parameters["@level"].Value = (int)log.Level;
-            cmd.Parameters["@timestamp"].Value = log.Timestamp.ToUniversalTime();
+            cmd.Parameters["@timestamp"].Value = log.Timestamp;
             cmd.Parameters["@exception"].Value = log.Exception ?? (object)DBNull.Value; //log.Exception?.Demystify().ToString() ?? (object)DBNull.Value;
 
-            return (long)await cmd.ExecuteScalarAsync(); ;
+            return (long)await cmd.ExecuteScalarAsync(); 
         }
 
-        private async Task InsertLogEntryPropertyAsync(SqliteCommand cmd, long logId, DateTimeOffset timestamp, KeyValuePair<string, object> property)
+        private async Task InsertLogEntryPropertyAsync(SqlCommand cmd, long logId, DateTimeOffset timestamp, KeyValuePair<string, object> property)
         {
             cmd.Parameters["@logId"].Value = logId;
             cmd.Parameters["@name"].Value = property.Key;
-            cmd.Parameters["@timestamp"].Value = timestamp.ToUniversalTime();
+            cmd.Parameters["@timestamp"].Value = timestamp;
             if (!(property.Value is null) && property.Value.GetType().Namespace == "System")
             {
                 cmd.Parameters["@value"].Value = property.Value.ToString();
@@ -127,7 +125,7 @@ namespace Sejil.Service
             await cmd.ExecuteNonQueryAsync();
         }
 
-        private SqliteCommand CreateJournalMemoryCommand(SqliteConnection conn)//, SqliteTransaction tran)
+        private SqlCommand CreateJournalMemoryCommand(SqlConnection conn)//, SqliteTransaction tran)
         {
             var sql = "PRAGMA journal_mode =  MEMORY;";
 
@@ -138,54 +136,39 @@ namespace Sejil.Service
             return cmd;
         }
 
-        private SqliteCommand CreateLogEntryInsertCommand(SqliteConnection conn)//, SqliteTransaction tran)
+        private SqlCommand CreateLogEntryInsertCommand(SqlConnection conn)//, SqliteTransaction tran)
         {
-            var sql = "INSERT INTO log (sourceApp, message, messageTemplate, level, timestamp, exception)" +
-                      "VALUES (@sourceApp, @message, @messageTemplate, @level, @timestamp, @exception); select last_insert_rowid();";
+            var sql = "INSERT INTO Journal.log (sourceApp, message, level, timestamp, exception)" +
+                "VALUES (@sourceApp, @message, @level, @timestamp, @exception); SELECT CONVERT(bigint,SCOPE_IDENTITY())";
 
             var cmd = conn.CreateCommand();
             cmd.CommandText = sql;
             cmd.CommandType = CommandType.Text;
 
-            cmd.Parameters.Add(new SqliteParameter("@sourceApp", DbType.String));
-            cmd.Parameters.Add(new SqliteParameter("@message", DbType.String));
-            cmd.Parameters.Add(new SqliteParameter("@messageTemplate", DbType.String));
-            cmd.Parameters.Add(new SqliteParameter("@level", DbType.Int32));
-            cmd.Parameters.Add(new SqliteParameter("@timestamp", DbType.DateTime2));
-            cmd.Parameters.Add(new SqliteParameter("@exception", DbType.String));
+            cmd.Parameters.Add(new SqlParameter("@sourceApp", DbType.String));
+            cmd.Parameters.Add(new SqlParameter("@message", DbType.String));
+            cmd.Parameters.Add(new SqlParameter("@level", DbType.Int32));
+            cmd.Parameters.Add(new SqlParameter("@timestamp", DbType.DateTime2));
+            cmd.Parameters.Add(new SqlParameter("@exception", DbType.String));
 
             return cmd;
         }
 
-        private SqliteCommand CreateLogEntryPropertyInsertCommand(SqliteConnection conn)//, SqliteTransaction tran)
+        private SqlCommand CreateLogEntryPropertyInsertCommand(SqlConnection conn)//, SqliteTransaction tran)
         {
-            var sql = "INSERT INTO log_property (logId, name, value, timestamp)" +
+            var sql = "INSERT INTO Journal.log_property (logId, name, value, timestamp)" +
                       "VALUES (@logId, @name, @value, @timestamp);";
 
             var cmd = conn.CreateCommand();
             cmd.CommandText = sql;
             cmd.CommandType = CommandType.Text;
 
-            cmd.Parameters.Add(new SqliteParameter("@logId", DbType.Int64));
-            cmd.Parameters.Add(new SqliteParameter("@name", DbType.String));
-            cmd.Parameters.Add(new SqliteParameter("@value", DbType.String));
-            cmd.Parameters.Add(new SqliteParameter("@timestamp", DbType.DateTime2));
+            cmd.Parameters.Add(new SqlParameter("@logId", DbType.Int64));
+            cmd.Parameters.Add(new SqlParameter("@name", DbType.String));
+            cmd.Parameters.Add(new SqlParameter("@value", DbType.String));
+            cmd.Parameters.Add(new SqlParameter("@timestamp", DbType.DateTime2));
 
             return cmd;
-        }
-
-        private void InitializeDatabase()
-        {
-            using (var conn = new SqliteConnection(_connectionString))
-            {
-                conn.Open();
-                var sql = ResourceHelper.GetEmbeddedResource("Sejil.db.sql");
-                using (var cmd = conn.CreateCommand())
-                {
-                    cmd.CommandText = sql;
-                    cmd.ExecuteNonQuery();
-                }
-            }
         }
 
         private string StripStringQuotes(string value)
@@ -210,7 +193,6 @@ namespace Sejil.Service
     {
         public DateTimeOffset Timestamp { get; set; }
         public LogEventLevel Level { get; set; }
-        public string MessageTemplate { get; set; }
         public string RenderedMessage { get; set; }
         public ExpandoObject Properties { get; set; }
         public Renderings Renderings { get; set; }

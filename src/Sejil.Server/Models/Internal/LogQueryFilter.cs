@@ -4,7 +4,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace Sejil.Models.Internal
+namespace SejilSQL.Models.Internal
 {
     public class LogQueryFilter
     {

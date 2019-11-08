@@ -1,12 +1,12 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
-using Sejil.Configuration;
+using SejilSQL.Configuration;
 using Serilog.Events;
 using System;
 using System.Collections.Generic;
 using System.Text;
 using Xunit;
 
-namespace Sejil.Test
+namespace SejilSQL.Test
 {
     public class ServiceCollectionExtensionsTests
     {

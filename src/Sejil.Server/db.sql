@@ -6,7 +6,6 @@ CREATE TABLE IF NOT EXISTS log(
 	timestamp DATETIME NOT NULL,
 	sourceApp TEXT NOT NULL collate nocase,
 	message TEXT NOT NULL collate nocase,
-	messageTemplate TEXT NOT NULL collate nocase,
 	level INTEGER NOT NULL,
 	exception TEXT NULL collate nocase
 );

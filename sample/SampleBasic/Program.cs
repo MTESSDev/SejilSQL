@@ -4,7 +4,7 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Sejil.Configuration;
+using SejilSQL.Configuration;
 using Serilog.Events;
 
 namespace Sample
@@ -15,7 +15,7 @@ namespace Sample
 
         public static IHostBuilder CreateHostBuilder(string[] args) =>
             Host.CreateDefaultBuilder(args)
-                .ConfigureWebHostDefaults(webBuilder =>
+                .ConfigureWebHostDefaults((webBuilder) =>
                 {
                     webBuilder.AddSejil(new SejilSettings("/sejil", LogEventLevel.Debug));
                     webBuilder.UseStartup<Startup>();

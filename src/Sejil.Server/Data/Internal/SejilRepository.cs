@@ -4,17 +4,17 @@
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Data.SqlClient;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Dapper;
-using Microsoft.Data.Sqlite;
-using Sejil.Configuration;
-using Sejil.Models.Internal;
+using SejilSQL.Configuration;
+using SejilSQL.Models.Internal;
 using Serilog.Events;
 
-namespace Sejil.Data.Internal
+namespace SejilSQL.Data.Internal
 {
     public class SejilRepository : ISejilRepository
     {
@@ -25,13 +25,13 @@ namespace Sejil.Data.Internal
         public SejilRepository(ISejilSqlProvider sql, ISejilSettings settings)
         {
             _sql = sql;
-            _connectionString = $"DataSource={settings.SqliteDbPath}";
+            _connectionString = settings.ConnectionString;
             _pageSize = settings.PageSize;
         }
 
         public async Task<bool> SaveQueryAsync(LogQuery logQuery)
         {
-            using (var conn = new SqliteConnection(_connectionString))
+            using (var conn = new SqlConnection(_connectionString))
             {
                 await conn.OpenAsync();
                 using (var cmd = conn.CreateCommand())
@@ -47,7 +47,7 @@ namespace Sejil.Data.Internal
 
         public async Task<IEnumerable<LogQuery>> GetSavedQueriesAsync()
         {
-            using (var conn = new SqliteConnection(_connectionString))
+            using (var conn = new SqlConnection(_connectionString))
             {
                 await conn.OpenAsync();
                 return conn.Query<LogQuery>(_sql.GetSavedQueriesSql());
@@ -58,7 +58,7 @@ namespace Sejil.Data.Internal
         {
             var sql = _sql.GetPagedLogEntriesSql(page, _pageSize, startingTimestamp, queryFilter);
 
-            using (var conn = new SqliteConnection(_connectionString))
+            using (var conn = new SqlConnection(_connectionString))
             {
                 await conn.OpenAsync();
                 var lookup = new Dictionary<long, LogEntry>();
@@ -87,7 +87,7 @@ namespace Sejil.Data.Internal
 
         public async Task<bool> DeleteQueryAsync(string queryName)
         {
-            using (var conn = new SqliteConnection(_connectionString))
+            using (var conn = new SqlConnection(_connectionString))
             {
                 await conn.OpenAsync();
                 using (var cmd = conn.CreateCommand())

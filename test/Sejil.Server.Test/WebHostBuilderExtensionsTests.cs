@@ -12,17 +12,17 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Newtonsoft.Json;
-using Sejil.Configuration;
-using Sejil.Models.Internal;
-using Sejil.Routing.Internal;
+using SejilSQL.Configuration;
+using SejilSQL.Models.Internal;
+using SejilSQL.Routing.Internal;
 using Serilog.Events;
 using Xunit;
 using Microsoft.AspNetCore.Hosting.Server;
 using Microsoft.AspNetCore.Http.Features;
 using System.Threading;
-using Sejil.Data.Internal;
+using SejilSQL.Data.Internal;
 
-namespace Sejil.Test
+namespace SejilSQL.Test
 {
     public class WebHostBuilderExtensionsTests
     {

@@ -4,9 +4,9 @@
 using System;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
-using Sejil.Models.Internal;
+using SejilSQL.Models.Internal;
 
-namespace Sejil.Routing.Internal
+namespace SejilSQL.Routing.Internal
 {
     public interface ISejilController
     {

@@ -1,11 +1,13 @@
 // Copyright (C) 2017 Alaa Masoud
 // See the LICENSE file in the project root for more information.
 
+using Dapper.Contrib.Extensions;
 using System;
 using System.Collections.Generic;
 
-namespace Sejil.Models.Internal
+namespace SejilSQL.Models.Internal
 {
+    [Table("Journal.Log_Query")]
     public class LogQuery
     {
         public int Id { get; set; }

@@ -5,11 +5,11 @@ using System;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using Sejil.Configuration;
-using Sejil.Models.Internal;
+using SejilSQL.Configuration;
+using SejilSQL.Models.Internal;
 using Serilog.Events;
 
-namespace Sejil.Data.Internal
+namespace SejilSQL.Data.Internal
 {
     public class SejilSqlProvider : ISejilSqlProvider
     {
@@ -18,13 +18,13 @@ namespace Sejil.Data.Internal
         public SejilSqlProvider(ISejilSettings settings) => _settings = settings;
 
         public string GetSavedQueriesSql()
-            => "SELECT * FROM log_query";
+            => "SELECT * FROM [Journal].log_query with (nolock)";
 
         public string InsertLogQuerySql()
-            => "INSERT INTO log_query (name, query) VALUES (@name, @query)";
+            => "INSERT INTO [Journal].log_query (name, query) VALUES (@name, @query)";
 
         public string DeleteQuerySql()
-            => "DELETE FROM log_query WHERE name = @name";
+            => "DELETE FROM [Journal].log_query WHERE name = @name";
 
         public string GetPagedLogEntriesSql(int page, int pageSize, DateTime? startingTimestamp, LogQueryFilter queryFilter)
         {
@@ -44,13 +44,12 @@ namespace Sejil.Data.Internal
             return
 $@"SELECT l.*, p.* from 
 (
-    SELECT * FROM log
+    SELECT TOP {pageSize} * FROM [Journal].log with (nolock)
     {timestampWhereClause}
     {queryWhereClause}{FiltersWhereClause()}
     ORDER BY timestamp DESC
-    LIMIT {pageSize}
 ) l
-LEFT JOIN log_property p ON l.timestamp = p.timestamp AND l.id = p.logId
+LEFT JOIN [Journal].log_property p with (nolock) ON l.timestamp = p.timestamp AND l.id = p.logId
 ORDER BY l.timestamp DESC, p.name";
 
             string TimestampWhereClause()
@@ -67,7 +66,7 @@ ORDER BY l.timestamp DESC, p.name";
 
                 if (hasStartingTimestampConstraint)
                 {
-                    sql.Append($@"timestamp < '{startingTimestamp.Value.ToUniversalTime().ToString("yyyy-MM-dd HH:mm:ss.fff")}'");
+                    sql.Append($@"timestamp < '{startingTimestamp.Value.ToString("yyyy-MM-dd HH:mm:ss.fff")}'");
                 }
 
                 if (hasStartingTimestampConstraint && hasDateFilter)
@@ -167,7 +166,7 @@ ORDER BY l.timestamp DESC, p.name";
                                     }
                                     else
                                     {
-                                        sql.AppendFormat("id {0} (SELECT logId FROM log_property WHERE name = '{1}' AND value {2} {3})",
+                                        sql.AppendFormat("id {0} (SELECT logId FROM [Journal].log_property with (nolock) WHERE name = '{1}' AND value {2} {3})",
                                             GetInclusionOperator(split[1].Trim().ToLower()), split[0], NegateIfNonInclusion(split[1].Trim().ToLower()), EnsureQuotes(split[2].Trim()));
                                     }
                                 }
@@ -176,7 +175,7 @@ ORDER BY l.timestamp DESC, p.name";
                                     // If we get here, then we received just a string. We will search the message column, exception column and all props for matches
                                     sql.AppendFormat(
                                         "(message LIKE '%{0}%' OR exception LIKE '%{0}%' OR " +
-                                        "id in (SELECT logId FROM log_property WHERE value LIKE '%{0}%'))",
+                                        "id in (SELECT logId FROM [Journal].log_property with (nolock) WHERE value LIKE '%{0}%'))",
                                         split[0].Trim());
                                 }
                             }
@@ -237,21 +236,21 @@ ORDER BY l.timestamp DESC, p.name";
                 switch (queryFilter.DateFilter)
                 {
                     case "5m":
-                        return "timestamp >= datetime('now', '-5 Minute')";
+                        return "timestamp >= DATEADD(minute, -5, GETDATE())";
                     case "15m":
-                        return "timestamp >= datetime('now', '-15 Minute')";
+                        return "timestamp >= DATEADD(minute, -15, GETDATE())";
                     case "1h":
-                        return "timestamp >= datetime('now', '-1 Hour')";
+                        return "timestamp >= DATEADD(hour, -1, GETDATE())";
                     case "6h":
-                        return "timestamp >= datetime('now', '-6 Hour')";
+                        return "timestamp >= DATEADD(hour, -6, GETDATE())";
                     case "12h":
-                        return "timestamp >= datetime('now', '-12 Hour')";
+                        return "timestamp >= DATEADD(hour, -12, GETDATE())";
                     case "24h":
-                        return "timestamp >= datetime('now', '-24 Hour')";
+                        return "timestamp >= DATEADD(hour, -24, GETDATE())";
                     case "2d":
-                        return "timestamp >= datetime('now', '-2 Day')";
+                        return "timestamp >= DATEADD(day, -2, GETDATE())";
                     case "5d":
-                        return "timestamp >= datetime('now', '-5 Day')";
+                        return "timestamp >= DATEADD(day, -5, GETDATE())";
                 }
             }
             else if (queryFilter.DateRangeFilter != null)

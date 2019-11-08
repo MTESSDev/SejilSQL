@@ -10,15 +10,15 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Moq;
-using Sejil.Configuration;
-using Sejil.Data.Internal;
-using Sejil.Models.Internal;
-using Sejil.Routing.Internal;
+using SejilSQL.Configuration;
+using SejilSQL.Data.Internal;
+using SejilSQL.Models.Internal;
+using SejilSQL.Routing.Internal;
 using Serilog.Core;
 using Serilog.Events;
 using Xunit;
 
-namespace Sejil.Test.Routing
+namespace SejilSQL.Test.Routing
 {
     public class SejilControllerTests
     {
@@ -312,7 +312,7 @@ namespace Sejil.Test.Routing
                 {
                     Id = 001,
                     Message = "message",
-                    MessageTemplate = "message template",
+                    //MessageTemplate = "message template",
                     Properties = new List<LogEntryProperty>
                     {
                         new LogEntryProperty

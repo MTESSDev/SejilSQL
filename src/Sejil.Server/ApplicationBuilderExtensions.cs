@@ -7,14 +7,14 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
-using Sejil.Configuration;
-using Sejil.Routing.Internal;
-using Sejil.Models.Internal;
+using SejilSQL.Configuration;
+using SejilSQL.Routing.Internal;
+using SejilSQL.Models.Internal;
 using Serilog.Context;
 using Microsoft.AspNetCore.Routing;
 using System.Text.Json;
 
-namespace Sejil
+namespace SejilSQL
 {
     public static class ApplicationBuilderExtensions
     {

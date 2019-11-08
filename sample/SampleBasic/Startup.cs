@@ -6,9 +6,9 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Sejil;
-using Sejil.Configuration;
-using Sejil.Service;
+using SejilSQL;
+using SejilSQL.Configuration;
+using SejilSQL.Service;
 using Serilog.Events;
 
 namespace Sample
@@ -22,13 +22,15 @@ namespace Sample
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+
             services.AddHostedService<SejilCleanupService>();
             services.AddControllersWithViews();
             services.AddSingleton<SejilService>();
-            services.ConfigureSejil(options =>
+            services.ConfigureSejil(options => 
             {
                 options.Title = "Logs";
                 options.LogRetentionDays = 3;
+                options.ConnectionString = Configuration.GetValue<string>("ECS:Logs:ConnectionString");
             });
         }
 
@@ -53,9 +55,9 @@ namespace Sample
 
             app.UseEndpoints(endpoints =>
             {
-               endpoints.MapControllerRoute(
-                    name: "default",
-                    pattern: "{controller=Home}/{action=Index}/{id?}");
+                endpoints.MapControllerRoute(
+                     name: "default",
+                     pattern: "{controller=Home}/{action=Index}/{id?}");
             });
         }
     }

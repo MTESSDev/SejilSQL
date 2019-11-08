@@ -4,7 +4,7 @@
 using System.IO;
 using System.Reflection;
 
-namespace Sejil
+namespace SejilSQL
 {
     public static class ResourceHelper
     {

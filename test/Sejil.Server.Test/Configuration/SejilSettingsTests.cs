@@ -5,11 +5,10 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Threading.Tasks;
-using Microsoft.Data.Sqlite;
 using Moq;
-using Sejil.Configuration;
-using Sejil.Data.Internal;
-using Sejil.Models.Internal;
+using SejilSQL.Configuration;
+using SejilSQL.Data.Internal;
+using SejilSQL.Models.Internal;
 using Xunit;
 using Xunit.Abstractions;
 using Dapper;
@@ -17,7 +16,7 @@ using System.Linq;
 using Serilog.Events;
 using System.IO;
 
-namespace Sejil.Test.Configuration
+namespace SejilSQL.Test.Configuration
 {
     public class SejilSettingsTests
     {
@@ -28,7 +27,7 @@ namespace Sejil.Test.Configuration
             var settings = new SejilSettings("url", LogEventLevel.Debug);
 
             // Assert
-            Assert.Equal(ResourceHelper.GetEmbeddedResource("Sejil.index.html"), settings.SejilAppHtml);
+            Assert.Equal(ResourceHelper.GetEmbeddedResource("SejilSQL.index.html"), settings.SejilAppHtml);
         }
 
         [Fact]
@@ -63,23 +62,13 @@ namespace Sejil.Test.Configuration
         }
 
         [Fact]
-        public void Ctor_sets_default_db_name()
-        {
-            // Arrange & act
-            var settings = new SejilSettings("", LogEventLevel.Debug);
-
-            // Assert
-            Assert.Matches(@"^Sejil-[0-9A-F]{8}-([0-9A-F]{4}-){3}[0-9A-F]{12}\.sqlite$", Path.GetFileName(settings.SqliteDbPath));
-        }
-
-        [Fact]
         public void Ctor_sets_default_settings()
         {
             // Arrange & act
             var settings = new SejilSettings("", LogEventLevel.Debug);
 
             // Assert
-            Assert.Equal(new[] { "message", "messagetemplate", "level", "timestamp", "exception", "sourceapp" },
+            Assert.Equal(new[] { "message", "level", "timestamp", "exception", "sourceapp" },
                 settings.NonPropertyColumns);
             Assert.Equal(100, settings.PageSize);
         }

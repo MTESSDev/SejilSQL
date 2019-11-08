@@ -2,9 +2,9 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using Sejil.Models.Internal;
+using SejilSQL.Models.Internal;
 
-namespace Sejil.Data.Internal
+namespace SejilSQL.Data.Internal
 {
     public interface ISejilSqlProvider
     {

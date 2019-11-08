@@ -5,12 +5,12 @@ using System;
 using System.IO;
 using System.Reflection;
 using Moq;
-using Sejil.Configuration;
-using Sejil.Logging;
+using SejilSQL.Configuration;
+using SejilSQL.Logging;
 using Serilog;
 using Xunit;
 
-namespace Sejil.Test.Logging
+namespace SejilSQL.Test.Logging
 {
     public class LoggerConfigurationExtensionsTests
     {
@@ -20,7 +20,7 @@ namespace Sejil.Test.Logging
             // Arrange
             var dir = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), Guid.NewGuid().ToString());
             var settingsMoq = new Mock<ISejilSettings>();
-            settingsMoq.SetupGet(p => p.SqliteDbPath).Returns(Path.Combine(dir, "db.sqlite"));
+            settingsMoq.SetupGet(p => p.ConnectionString).Returns(Path.Combine(dir, "db.sqlite"));
 
             // Act
             Assert.False(Directory.Exists(dir));
@@ -36,7 +36,7 @@ namespace Sejil.Test.Logging
             // Arrange
             var dir = "/!@#$/><:'+_";
             var settingsMoq = new Mock<ISejilSettings>();
-            settingsMoq.SetupGet(p => p.SqliteDbPath).Returns(Path.Combine(dir, "db.sqlite"));
+            settingsMoq.SetupGet(p => p.ConnectionString).Returns(Path.Combine(dir, "db.sqlite"));
 
             // Act & assert
             Assert.ThrowsAny<Exception>(() => new LoggerConfiguration().WriteTo.Sejil(settingsMoq.Object));

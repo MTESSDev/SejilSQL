@@ -5,12 +5,12 @@ using System;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Authentication;
-using Sejil.Configuration;
-using Sejil.Data.Internal;
-using Sejil.Models.Internal;
+using SejilSQL.Configuration;
+using SejilSQL.Data.Internal;
+using SejilSQL.Models.Internal;
 using System.Text.Json;
 
-namespace Sejil.Routing.Internal
+namespace SejilSQL.Routing.Internal
 {
     public class SejilController : ISejilController
     {

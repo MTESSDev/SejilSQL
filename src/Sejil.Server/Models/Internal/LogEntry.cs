@@ -3,15 +3,16 @@
 
 using System;
 using System.Collections.Generic;
+using Dapper.Contrib.Extensions;
 
-namespace Sejil.Models.Internal
+namespace SejilSQL.Models.Internal
 {
+    [Table("Journal.LogEntry")]
     public class LogEntry
     {
         public long Id { get; set; }
         public string Message { get; set; }
         public string SourceApp { get; set; }
-        public string MessageTemplate { get; set; }
         public string Level { get; set; }
         public DateTime Timestamp { get; set; }
         public string Exception { get; set; }

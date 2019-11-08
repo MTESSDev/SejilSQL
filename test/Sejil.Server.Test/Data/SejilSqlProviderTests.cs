@@ -4,13 +4,13 @@
 using System;
 using System.Collections.Generic;
 using Moq;
-using Sejil.Configuration;
-using Sejil.Data.Internal;
-using Sejil.Models.Internal;
+using SejilSQL.Configuration;
+using SejilSQL.Data.Internal;
+using SejilSQL.Models.Internal;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace Sejil.Test.Data
+namespace SejilSQL.Test.Data
 {
     public class SejilSqlProviderTests
     {
@@ -265,7 +265,7 @@ ORDER BY l.timestamp DESC, p.name", sql);
     ORDER BY timestamp DESC
     LIMIT 100 OFFSET 100
 ) l
-LEFT JOIN log_property p ON l.id = p.logId
+LEFT JOIN log_property with (nolock) p ON l.id = p.logId
 ORDER BY l.timestamp DESC, p.name", sql);
         }
 

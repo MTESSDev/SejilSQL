@@ -5,32 +5,32 @@
     <Description>Capture, view and filter your ASP.net core log events right from your app</Description>
     <Authors>Alaa Masoud, Dany Côté</Authors>
     <Copyright>Copyright © Alaa Masoud</Copyright>
-    <PackageId>SejilGouvQC</PackageId>
+    <PackageId>SejilSQL</PackageId>
     <PackageTags>sejil;logging;structured</PackageTags>
     <PackageIconUrl></PackageIconUrl>
     <PackageProjectUrl>https://github.com/TrucsPES/Sejil</PackageProjectUrl>
     <PackageLicenseUrl>http://www.apache.org/licenses/LICENSE-2.0</PackageLicenseUrl>
     <TargetFrameworks>netstandard2.1</TargetFrameworks>
-    <VersionPrefix>2.0.0-beta1</VersionPrefix>
-    <AssemblyName>Sejil</AssemblyName>
+    <VersionPrefix>2.0.0-rc3</VersionPrefix>
+    <AssemblyName>SejilSQL</AssemblyName>
     <GenerateAssemblyVersionAttribute>false</GenerateAssemblyVersionAttribute>
     <DebugType>full</DebugType>
-    <RootNamespace>Sejil</RootNamespace>
-    <Version>2.0.0-rc3</Version>
-    <Product>SejilGouvQC</Product>
+    <RootNamespace>SejilSQL</RootNamespace>
+    <Version>2.0.0</Version>
+    <Product>SejilSQL</Product>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <FileVersion>2.0.0.3</FileVersion>
   </PropertyGroup>
 
 
   <ItemGroup>
+    <PackageReference Include="Ben.Demystifier" Version="0.1.4" />
+    <PackageReference Include="Dapper.Contrib" Version="1.60.1" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.Abstractions" Version="2.2.0" />
     <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.2.0" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="3.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.Routing" Version="2.2.2" />
     <PackageReference Include="Microsoft.AspNetCore.Hosting" Version="2.2.7" />
-    <PackageReference Include="Microsoft.Data.Sqlite" Version="3.0.0" />
-    <PackageReference Include="Ben.Demystifier" Version="0.1.4" />
     <PackageReference Include="Newtonsoft.Json" Version="12.0.2" />
     <PackageReference Include="Serilog" Version="2.9.0-dev-01124" />
     <PackageReference Include="Serilog.Sinks.PeriodicBatching" Version="2.2.1-dev-00755" />

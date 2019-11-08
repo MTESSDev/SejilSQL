@@ -5,18 +5,16 @@ using Serilog.Events;
 using Serilog.Core;
 using System.IO;
 using System;
-using Sejil.Configuration;
+using SejilSQL.Configuration;
 
-namespace Sejil.Configuration
+namespace SejilSQL.Configuration
 {
     public class SejilSettings : ISejilSettings
     {
-        private const string UUID = "59A8F730-6AC5-427A-9492-A3A9EAD9556F";
-
         public string SejilAppHtml { get; private set; }
         public string Url { get; private set; }
         public LoggingLevelSwitch LoggingLevelSwitch { get; private set; }
-        public string SqliteDbPath { get; private set; }
+        public string ConnectionString { get; set; }
         public string[] NonPropertyColumns { get; private set; }
         public int PageSize { get; private set; }
 
@@ -33,27 +31,14 @@ namespace Sejil.Configuration
 
         public SejilSettings(string uri, LogEventLevel minLogLevel)
         {
-            SejilAppHtml = ResourceHelper.GetEmbeddedResource("Sejil.index.html");
+            SejilAppHtml = ResourceHelper.GetEmbeddedResource("SejilSQL.index.html");
             Url = uri.StartsWith("/") ? uri : "/" + uri;
             LoggingLevelSwitch = new LoggingLevelSwitch
             {
                 MinimumLevel = minLogLevel
             };
 
-            if (IsRunningInAzure())
-            {
-                // If running in azure, we won't use local app folder as its temporary and will frequently be deleted.
-                // Use home folder instead.
-                SqliteDbPath = Path.Combine(Path.GetFullPath("/home"), $"Sejil-{UUID}.sqlite");
-            }
-            else
-            {
-                var appDataFolder = GetLocalAppFolder();
-                var appName = System.Reflection.Assembly.GetEntryAssembly().GetName().Name;
-                SqliteDbPath = Path.Combine(appDataFolder, appName, $"Sejil-{UUID}.sqlite");
-            }
-
-            NonPropertyColumns = new[] { "message", "messagetemplate", "level", "timestamp", "exception", "sourceapp" };
+            NonPropertyColumns = new[] { "message", "level", "timestamp", "exception", "sourceapp" };
             PageSize = 100;
         }
 
