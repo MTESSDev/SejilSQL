@@ -28,7 +28,7 @@ namespace Microsoft.AspNetCore.Hosting
         public static IWebHostBuilder AddSejil(this IWebHostBuilder builder, ISejilSettings settings)
         {
             return builder
-              .ConfigureLogging((logging) => logging.AddSerilog(CreateLogger(settings)))
+              //.ConfigureLogging((logging) => logging.AddSerilog(CreateLogger(settings)))
               .ConfigureServices(services =>
               {
                   services.TryAddSingleton<IHttpContextAccessor, HttpContextAccessor>();
