@@ -85,29 +85,39 @@ namespace SejilSQL.Service
 
         public async Task CleanupDb()
         {
-            using (var conn = new SqlConnection(_connectionString))
+            try
             {
-                conn.Open();
-                var sql = $"DELETE TOP(2000) FROM [JOURNAL].log          WHERE timestamp <= DATEADD(day, -{_settings.LogRetentionDays}, GETDATE());" +
-                          $"DELETE TOP(5000) FROM [JOURNAL].log_property WHERE timestamp <= DATEADD(day, -{_settings.LogRetentionDays}, GETDATE());";
-                using (var cmd = conn.CreateCommand())
+                using (var conn = new SqlConnection(_connectionString))
                 {
-                    cmd.CommandText = sql;
-                    cmd.CommandTimeout = 100;
-                    var nb = await cmd.ExecuteNonQueryAsync();
+                    conn.Open();
+                    var sql = $"DELETE TOP(2000) FROM [JOURNAL].log          WHERE timestamp <= DATEADD(day, -{_settings.LogRetentionDays}, GETDATE());" +
+                              $"DELETE TOP(5000) FROM [JOURNAL].log_property WHERE timestamp <= DATEADD(day, -{_settings.LogRetentionDays}, GETDATE());";
+                    using (var cmd = conn.CreateCommand())
+                    {
+                        cmd.CommandText = sql;
+                        cmd.CommandTimeout = 100;
+                        var nb = await cmd.ExecuteNonQueryAsync();
+                    }
                 }
+            }
+            catch (Exception ex)
+            {
+
+                IEnumerable<Event> listEvent = new List<Event>() { new Event() { Exception = ex.ToString(), Level = LogEventLevel.Fatal, Timestamp = DateTime.Now, RenderedMessage = "Cleanup database fail - " + ex.Message } };
+                await EmitBatchAsync(listEvent, "SejilCleanup");
+
             }
         }
 
         private async Task<long> InsertLogEntryAsync(SqlCommand cmd, Event log, string sourceApp)
         {
             cmd.Parameters["@sourceApp"].Value = sourceApp;
-            cmd.Parameters["@message"].Value = log.RenderedMessage; 
+            cmd.Parameters["@message"].Value = log.RenderedMessage;
             cmd.Parameters["@level"].Value = (int)log.Level;
             cmd.Parameters["@timestamp"].Value = log.Timestamp;
             cmd.Parameters["@exception"].Value = log.Exception ?? (object)DBNull.Value; //log.Exception?.Demystify().ToString() ?? (object)DBNull.Value;
 
-            return (long)await cmd.ExecuteScalarAsync(); 
+            return (long)await cmd.ExecuteScalarAsync();
         }
 
         private async Task InsertLogEntryPropertyAsync(SqlCommand cmd, long logId, DateTimeOffset timestamp, KeyValuePair<string, object> property)

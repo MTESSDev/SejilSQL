@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace SejilSQL.Service
 {
-  public  class SejilCleanupService : BackgroundService
+    public class SejilCleanupService : BackgroundService
     {
         private readonly string _connectionString;
         private readonly SejilService _sejilService;
