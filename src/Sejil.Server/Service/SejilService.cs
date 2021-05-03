@@ -90,12 +90,12 @@ namespace SejilSQL.Service
                 using (var conn = new SqlConnection(_connectionString))
                 {
                     conn.Open();
-                    var sql = $"DELETE TOP(2000) FROM [JOURNAL].log          WHERE timestamp <= DATEADD(day, -{_settings.LogRetentionDays}, GETDATE());" +
-                              $"DELETE TOP(5000) FROM [JOURNAL].log_property WHERE timestamp <= DATEADD(day, -{_settings.LogRetentionDays}, GETDATE());";
+                    var sql = $"DELETE TOP(5000) FROM [JOURNAL].log          WHERE timestamp <= DATEADD(day, -{_settings.LogRetentionDays}, GETDATE());" +
+                              $"DELETE TOP(50000) FROM [JOURNAL].log_property WHERE timestamp <= DATEADD(day, -{_settings.LogRetentionDays}, GETDATE());";
                     using (var cmd = conn.CreateCommand())
                     {
                         cmd.CommandText = sql;
-                        cmd.CommandTimeout = 100;
+                        cmd.CommandTimeout = 150;
                         var nb = await cmd.ExecuteNonQueryAsync();
                     }
                 }

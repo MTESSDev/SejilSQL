@@ -11,15 +11,15 @@
     <PackageProjectUrl>https://github.com/TrucsPES/Sejil</PackageProjectUrl>
     <PackageLicenseUrl>http://www.apache.org/licenses/LICENSE-2.0</PackageLicenseUrl>
     <TargetFrameworks>netstandard2.1</TargetFrameworks>
-    <VersionPrefix>2.0.3</VersionPrefix>
+    <VersionPrefix>2.0.4</VersionPrefix>
     <AssemblyName>SejilSQL</AssemblyName>
     <GenerateAssemblyVersionAttribute>false</GenerateAssemblyVersionAttribute>
     <DebugType>full</DebugType>
     <RootNamespace>SejilSQL</RootNamespace>
-    <Version>2.0.3</Version>
+    <Version>2.0.4</Version>
     <Product>SejilSQL</Product>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <FileVersion>2.0.3.0</FileVersion>
+    <FileVersion>2.0.4.0</FileVersion>
   </PropertyGroup>
 
 
