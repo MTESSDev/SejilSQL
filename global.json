@@ -1,5 +1,6 @@
 {
-    "sdk": {
-        "version": "3.0.100-preview8-013656"
-    }
+  "sdk": {
+    "version": "3.0.100-preview8-013656",
+    "rollForward": "latestMinor"
+  }
 }
