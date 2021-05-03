@@ -25,7 +25,7 @@ namespace SejilSQL.Service
             while (!stoppingToken.IsCancellationRequested)
             {
                 await _sejilService.CleanupDb();
-                await Task.Delay(TimeSpan.FromMinutes(30), stoppingToken);
+                await Task.Delay(TimeSpan.FromMinutes(5), stoppingToken);
             }
         }
     }
