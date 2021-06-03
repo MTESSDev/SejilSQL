@@ -11,7 +11,7 @@ namespace SejilSQL.Routing.Internal
     public interface ISejilController
     {
         Task GetIndexAsync();
-        Task GetEventsAsync(int page, DateTime? startingTs, LogQueryFilter queryFilter);
+        Task GetEventsAsync(int page, int? pageSize, DateTime? startingTs, LogQueryFilter queryFilter);
         Task SaveQueryAsync(LogQuery logQuery);
         Task GetQueriesAsync();
         Task GetMinimumLogLevelAsync();

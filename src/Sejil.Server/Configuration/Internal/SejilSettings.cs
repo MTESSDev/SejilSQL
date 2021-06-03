@@ -16,7 +16,7 @@ namespace SejilSQL.Configuration
         public LoggingLevelSwitch LoggingLevelSwitch { get; private set; }
         public string ConnectionString { get; set; }
         public string[] NonPropertyColumns { get; private set; }
-        public int PageSize { get; private set; }
+        public int PageSize { get; set; } = 100;
 
         /// <summary>
         /// Gets or sets the title shown in the front end
@@ -39,7 +39,6 @@ namespace SejilSQL.Configuration
             };
 
             NonPropertyColumns = new[] { "message", "level", "timestamp", "exception", "sourceapp" };
-            PageSize = 100;
         }
 
         public bool TrySetMinimumLogLevel(string minLogLevel)

@@ -138,7 +138,7 @@ namespace SejilSQL.Test.Data
             }
 
             // Act
-            var logs = await repository.GetEventsPageAsync(2, null, null);
+            var logs = await repository.GetEventsPageAsync(2, null, null, null);
 
             // Assert
             Assert.Equal(3, logs.Count());
@@ -181,7 +181,7 @@ namespace SejilSQL.Test.Data
             }
 
             // Act
-            var logs = await repository.GetEventsPageAsync(4, null, null);
+            var logs = await repository.GetEventsPageAsync(4, null, null, null);
 
             // Assert
             Assert.Single(logs);

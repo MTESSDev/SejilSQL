@@ -53,10 +53,11 @@ namespace SejilSQL
                 {
                     var query = await JsonSerializer.DeserializeAsync<LogQueryFilter>(context.Request.Body, _camelCaseJson);
                     Int32.TryParse(context.Request.Query["page"].FirstOrDefault(), out var page);
+                    Int32.TryParse(context.Request.Query["pageSize"].FirstOrDefault(), out var pageSize);
                     var dateParsed = DateTime.TryParse(context.Request.Query["startingTs"].FirstOrDefault(), out var startingTs);
 
                     var controller = GetSejilController(context);
-                    await controller.GetEventsAsync(page, dateParsed ? startingTs : (DateTime?)null, query);
+                    await controller.GetEventsAsync(page, pageSize, dateParsed ? startingTs : (DateTime?)null, query);
                 });
 
                 routes.MapPost($"{url}/log-query", async context =>

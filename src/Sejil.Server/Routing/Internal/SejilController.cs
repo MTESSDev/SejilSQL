@@ -34,9 +34,13 @@ namespace SejilSQL.Routing.Internal
             }
         }
 
-        public async Task GetEventsAsync(int page, DateTime? startingTs, LogQueryFilter queryFilter)
+        public async Task GetEventsAsync(int page, int? pageSize, DateTime? startingTs, LogQueryFilter queryFilter)
         {
-            var events = await _repository.GetEventsPageAsync(page == 0 ? 1 : page, startingTs, queryFilter);
+            if (pageSize <= 0)
+            {
+                pageSize = _settings.PageSize;
+            }
+            var events = await _repository.GetEventsPageAsync(page == 0 ? 1 : page, startingTs, queryFilter, pageSize);
 
             _context.Response.ContentType = "application/json";
             await _context.Response.WriteAsync(JsonSerializer.Serialize(events, ApplicationBuilderExtensions._camelCaseJson));
