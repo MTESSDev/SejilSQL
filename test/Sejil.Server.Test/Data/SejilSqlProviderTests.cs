@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using Dapper;
 using Moq;
 using SejilSQL.Configuration;
 using SejilSQL.Data.Internal;
@@ -60,7 +61,7 @@ namespace SejilSQL.Test.Data
             var provider = new SejilSqlProvider(Mock.Of<ISejilSettings>());
 
             // Act & assert
-            var ex = Assert.Throws<ArgumentOutOfRangeException>("page", () => provider.GetPagedLogEntriesSql(0, 1, null, null));
+            var ex = Assert.Throws<ArgumentOutOfRangeException>("page", () => provider.GetPagedLogEntriesSql(0, 1, null, null, new DynamicParameters()));
             Assert.Equal($"Argument must be greater than zero. (Parameter 'page')", ex.Message);
         }
 
@@ -71,7 +72,7 @@ namespace SejilSQL.Test.Data
             var provider = new SejilSqlProvider(Mock.Of<ISejilSettings>());
 
             // Act & assert
-            var ex = Assert.Throws<ArgumentOutOfRangeException>("page", () => provider.GetPagedLogEntriesSql(-1, 1, null, null));
+            var ex = Assert.Throws<ArgumentOutOfRangeException>("page", () => provider.GetPagedLogEntriesSql(-1, 1, null, null, new DynamicParameters()));
             Assert.Equal($"Argument must be greater than zero. (Parameter 'page')", ex.Message);
         }
 
@@ -82,7 +83,7 @@ namespace SejilSQL.Test.Data
             var provider = new SejilSqlProvider(Mock.Of<ISejilSettings>());
 
             // Act & assert
-            var ex = Assert.Throws<ArgumentOutOfRangeException>("pageSize", () => provider.GetPagedLogEntriesSql(1, 0, null, null));
+            var ex = Assert.Throws<ArgumentOutOfRangeException>("pageSize", () => provider.GetPagedLogEntriesSql(1, 0, null, null, new DynamicParameters()));
             Assert.Equal($"Argument must be greater than zero. (Parameter 'pageSize')", ex.Message);
         }
 
@@ -93,7 +94,7 @@ namespace SejilSQL.Test.Data
             var provider = new SejilSqlProvider(Mock.Of<ISejilSettings>());
 
             // Act & assert
-            var ex = Assert.Throws<ArgumentOutOfRangeException>("pageSize", () => provider.GetPagedLogEntriesSql(1, -1, null, null));
+            var ex = Assert.Throws<ArgumentOutOfRangeException>("pageSize", () => provider.GetPagedLogEntriesSql(1, -1, null, null, new DynamicParameters()));
             Assert.Equal($"Argument must be greater than zero. (Parameter 'pageSize')", ex.Message);
         }
 
@@ -106,7 +107,7 @@ namespace SejilSQL.Test.Data
             var provider = new SejilSqlProvider(Mock.Of<ISejilSettings>());
 
             // Act
-            var sql = provider.GetPagedLogEntriesSql(page, pageSize, null, null);
+            var sql = provider.GetPagedLogEntriesSql(page, pageSize, null, null, new DynamicParameters());
 
             // Assert
             Assert.Equal(
@@ -130,7 +131,7 @@ ORDER BY l.timestamp DESC, p.name", sql);
             var provider = new SejilSqlProvider(Mock.Of<ISejilSettings>());
 
             // Act
-            var sql = provider.GetPagedLogEntriesSql(2, 100, timestamp, null);
+            var sql = provider.GetPagedLogEntriesSql(2, 100, timestamp, null, new DynamicParameters());
 
             // Assert
             Assert.Equal(
@@ -154,7 +155,7 @@ ORDER BY l.timestamp DESC, p.name", sql);
             var provider = new SejilSqlProvider(Mock.Of<ISejilSettings>());
 
             // Act
-            var sql = provider.GetPagedLogEntriesSql(2, 100, timestamp, null);
+            var sql = provider.GetPagedLogEntriesSql(2, 100, timestamp, null, new DynamicParameters());
 
             // Assert
             Assert.Equal(
@@ -178,7 +179,7 @@ ORDER BY l.timestamp DESC, p.name", sql);
             var provider = new SejilSqlProvider(Mock.Of<ISejilSettings>());
 
             // Act
-            var sql = provider.GetPagedLogEntriesSql(2, 100, timestamp, new LogQueryFilter { DateFilter = "5m" });
+            var sql = provider.GetPagedLogEntriesSql(2, 100, timestamp, new LogQueryFilter { DateFilter = "5m" }, new DynamicParameters());
 
             // Assert
             Assert.Equal(
@@ -203,7 +204,7 @@ ORDER BY l.timestamp DESC, p.name", sql);
             var provider = new SejilSqlProvider(Mock.Of<ISejilSettings>());
 
             // Act
-            var sql = provider.GetPagedLogEntriesSql(2, 100, timestamp, new LogQueryFilter { QueryText = query });
+            var sql = provider.GetPagedLogEntriesSql(2, 100, timestamp, new LogQueryFilter { QueryText = query }, new DynamicParameters());
 
             // Assert
             Assert.Equal(
@@ -228,7 +229,7 @@ ORDER BY l.timestamp DESC, p.name", sql);
             var provider = new SejilSqlProvider(Mock.Of<ISejilSettings>());
 
             // Act
-            var sql = provider.GetPagedLogEntriesSql(2, 100, timestamp, new LogQueryFilter { LevelFilter = levelFilter });
+            var sql = provider.GetPagedLogEntriesSql(2, 100, timestamp, new LogQueryFilter { LevelFilter = levelFilter }, new DynamicParameters());
 
             // Assert
             Assert.Equal(
@@ -253,7 +254,7 @@ ORDER BY l.timestamp DESC, p.name", sql);
             var provider = new SejilSqlProvider(Mock.Of<ISejilSettings>());
 
             // Act
-            var sql = provider.GetPagedLogEntriesSql(2, 100, null, new LogQueryFilter { QueryText = query, LevelFilter = levelFilter });
+            var sql = provider.GetPagedLogEntriesSql(2, 100, null, new LogQueryFilter { QueryText = query, LevelFilter = levelFilter }, new DynamicParameters());
 
             // Assert
             Assert.Equal(
@@ -279,7 +280,7 @@ ORDER BY l.timestamp DESC, p.name", sql);
             var provider = new SejilSqlProvider(settingsMoq.Object);
 
             // Act
-            var sql = provider.GetPagedLogEntriesSql(2, 100, null, new LogQueryFilter { QueryText = query });
+            var sql = provider.GetPagedLogEntriesSql(2, 100, null, new LogQueryFilter { QueryText = query }, new DynamicParameters());
 
             // Assert
             Assert.Equal(expectedSql, GetInnerPredicate(sql));
@@ -294,7 +295,7 @@ ORDER BY l.timestamp DESC, p.name", sql);
             var provider = new SejilSqlProvider(settingsMoq.Object);
 
             // Act
-            var sql = provider.GetPagedLogEntriesSql(2, 100, null, new LogQueryFilter { DateFilter = dateFilter });
+            var sql = provider.GetPagedLogEntriesSql(2, 100, null, new LogQueryFilter { DateFilter = dateFilter }, new DynamicParameters());
 
             // Assert
             Assert.Equal(expectedSql, GetInnerPredicate_ts(sql));
@@ -309,7 +310,7 @@ ORDER BY l.timestamp DESC, p.name", sql);
             var provider = new SejilSqlProvider(settingsMoq.Object);
 
             // Act
-            var sql = provider.GetPagedLogEntriesSql(2, 100, null, new LogQueryFilter { LevelFilter = levelFilter, ExceptionsOnly = exceptionsOnly });
+            var sql = provider.GetPagedLogEntriesSql(2, 100, null, new LogQueryFilter { LevelFilter = levelFilter, ExceptionsOnly = exceptionsOnly }, new DynamicParameters());
 
             // Assert
             Assert.Equal(expectedSql, GetInnerPredicate(sql));
@@ -325,7 +326,7 @@ ORDER BY l.timestamp DESC, p.name", sql);
             var provider = new SejilSqlProvider(settingsMoq.Object);
 
             // Act
-            var sql = provider.GetPagedLogEntriesSql(2, 100, null, new LogQueryFilter { DateRangeFilter = new List<DateTime> { d1, d2 } });
+            var sql = provider.GetPagedLogEntriesSql(2, 100, null, new LogQueryFilter { DateRangeFilter = new List<DateTime> { d1, d2 } }, new DynamicParameters());
 
             // Assert
             Assert.Equal("timestamp >= '2017-08-01' and timestamp < '2017-08-10'", GetInnerPredicate_ts(sql));

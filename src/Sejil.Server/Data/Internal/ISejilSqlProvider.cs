@@ -2,6 +2,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using Dapper;
 using SejilSQL.Models.Internal;
 
 namespace SejilSQL.Data.Internal
@@ -10,7 +11,7 @@ namespace SejilSQL.Data.Internal
     {
         string InsertLogQuerySql();
         string GetSavedQueriesSql();
-        string GetPagedLogEntriesSql(int page, int pageSize, DateTime? startingTimestamp, LogQueryFilter queryFilter);
+        string GetPagedLogEntriesSql(int page, int pageSize, DateTime? startingTimestamp, LogQueryFilter queryFilter, DynamicParameters parameters);
         string DeleteQuerySql();
     }
 }

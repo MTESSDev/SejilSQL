@@ -56,7 +56,8 @@ namespace SejilSQL.Data.Internal
 
         public async Task<IEnumerable<LogEntry>> GetEventsPageAsync(int page, DateTime? startingTimestamp, LogQueryFilter queryFilter, int? pageSize)
         {
-            var sql = _sql.GetPagedLogEntriesSql(page, pageSize ?? _pageSize, startingTimestamp, queryFilter);
+            var parameters = new DynamicParameters();
+            var sql = _sql.GetPagedLogEntriesSql(page, pageSize ?? _pageSize, startingTimestamp, queryFilter, parameters);
 
             using (var conn = new SqlConnection(_connectionString))
             {
@@ -79,7 +80,7 @@ namespace SejilSQL.Data.Internal
                         }
                         return logEntry;
 
-                    }, splitOn: "Id, timestamp");
+                    }, param: parameters, splitOn: "Id, timestamp");
 
                 return lookup.Values.AsEnumerable();
             }

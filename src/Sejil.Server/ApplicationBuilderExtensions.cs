@@ -5,6 +5,7 @@ using System;
 using System.Text;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using SejilSQL.Configuration;
@@ -49,7 +50,7 @@ namespace SejilSQL
                     await controller.GetIndexAsync();
                 });
 
-                routes.MapPost($"{url}/events", async context =>
+                routes.MapPost($"{url}/events", RequireAuthentication(settings, async context =>
                 {
                     var query = await JsonSerializer.DeserializeAsync<LogQueryFilter>(context.Request.Body, _camelCaseJson);
                     Int32.TryParse(context.Request.Query["page"].FirstOrDefault(), out var page);
@@ -58,7 +59,7 @@ namespace SejilSQL
 
                     var controller = GetSejilController(context);
                     await controller.GetEventsAsync(page, pageSize, dateParsed ? startingTs : (DateTime?)null, query);
-                });
+                }));
 
                 routes.MapPost($"{url}/log-query", async context =>
                 {
@@ -80,11 +81,11 @@ namespace SejilSQL
                     await controller.GetMinimumLogLevelAsync();
                 });
 
-                routes.MapGet($"{url}/user-name", async context =>
+                routes.MapGet($"{url}/user-name", RequireAuthentication(settings, async context =>
                 {
                     var controller = GetSejilController(context);
                     await controller.GetUserNameAsync();
-                });
+                }));
 
                 routes.MapPost($"{url}/min-log-level", async context =>
                 {
@@ -93,22 +94,38 @@ namespace SejilSQL
                     controller.SetMinimumLogLevel(minLogLevel);
                 });
 
-                routes.MapPost($"{url}/del-query", async context =>
+                routes.MapPost($"{url}/del-query", RequireAuthentication(settings, async context =>
                 {
                     var queryName = await GetRequestBodyAsync(context.Request);
                     var controller = GetSejilController(context);
                     await controller.DeleteQueryAsync(queryName);
-                });
+                }));
 
-                routes.MapGet($"{url}/title", async context =>
+                routes.MapGet($"{url}/title", RequireAuthentication(settings, async context =>
                 {
                     var controller = GetSejilController(context);
                     await controller.GetTitleAsync();
-                });
+                }));
             });
 
             return app;
         }
+
+        /// <summary>
+        /// Challenges the request before running the handler (and before its body is read)
+        /// when an authentication scheme is configured and the user is not authenticated.
+        /// </summary>
+        private static RequestDelegate RequireAuthentication(ISejilSettings settings, RequestDelegate handler)
+            => async context =>
+            {
+                if (!String.IsNullOrWhiteSpace(settings.AuthenticationScheme) && !context.User.Identity.IsAuthenticated)
+                {
+                    await context.ChallengeAsync(settings.AuthenticationScheme);
+                    return;
+                }
+
+                await handler(context);
+            };
 
         private static ISejilController GetSejilController(HttpContext context)
             => context.RequestServices.GetService(typeof(ISejilController)) as ISejilController;

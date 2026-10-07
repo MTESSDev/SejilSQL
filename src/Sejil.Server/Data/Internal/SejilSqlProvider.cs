@@ -5,6 +5,7 @@ using System;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using Dapper;
 using SejilSQL.Configuration;
 using SejilSQL.Models.Internal;
 using Serilog.Events;
@@ -26,8 +27,13 @@ namespace SejilSQL.Data.Internal
         public string DeleteQuerySql()
             => "DELETE FROM [Journal].log_query WHERE name = @name";
 
-        public string GetPagedLogEntriesSql(int page, int pageSize, DateTime? startingTimestamp, LogQueryFilter queryFilter)
+        public string GetPagedLogEntriesSql(int page, int pageSize, DateTime? startingTimestamp, LogQueryFilter queryFilter, DynamicParameters parameters)
         {
+            if (parameters == null)
+            {
+                throw new ArgumentNullException(nameof(parameters));
+            }
+
             if (page <= 0)
             {
                 throw new ArgumentOutOfRangeException(nameof(page), "Argument must be greater than zero.");
@@ -91,8 +97,8 @@ ORDER BY l.timestamp DESC, p.name";
                 String.IsNullOrWhiteSpace(queryFilter?.QueryText)
                     ? ""
                     : timestampWhereClause.Length > 0
-                        ? $"AND ({BuildPredicate(queryFilter.QueryText, _settings.NonPropertyColumns)})"
-                        : $"WHERE ({BuildPredicate(queryFilter.QueryText, _settings.NonPropertyColumns)})";
+                        ? $"AND ({BuildPredicate(queryFilter.QueryText, _settings.NonPropertyColumns, parameters)})"
+                        : $"WHERE ({BuildPredicate(queryFilter.QueryText, _settings.NonPropertyColumns, parameters)})";
 
             string FiltersWhereClause() =>
                 String.IsNullOrWhiteSpace(queryFilter?.LevelFilter) && (!queryFilter?.ExceptionsOnly ?? true)
@@ -124,7 +130,9 @@ ORDER BY l.timestamp DESC, p.name";
             return sp.ToString();
         }
 
-        private static string BuildPredicate(string filterQuery, string[] nonPropertyColumns)
+        // User supplied values are never concatenated into the SQL: they are added to
+        // the parameters and only their placeholder (@q0, @q1, ...) is emitted.
+        private static string BuildPredicate(string filterQuery, string[] nonPropertyColumns, DynamicParameters parameters)
         {
             var sb = new StringBuilder();
             BuildPredicateCore(filterQuery, sb);
@@ -161,22 +169,24 @@ ORDER BY l.timestamp DESC, p.name";
                                 {
                                     if (nonPropertyColumns.Contains(split[0].ToLower()))
                                     {
-                                        sql.AppendFormat("{0} {1} \'{2}\'",
-                                            split[0], split[1].ToUpper().Trim(), split[2].Trim('"', ' ', '\''));
+                                        // Column name is safe here: it matched \w+ and is whitelisted by nonPropertyColumns.
+                                        sql.AppendFormat("{0} {1} {2}",
+                                            split[0], split[1].ToUpper().Trim(), AddParameter(parameters, split[2].Trim('"', ' ', '\'')));
                                     }
                                     else
                                     {
-                                        sql.AppendFormat("id {0} (SELECT logId FROM [Journal].log_property with (nolock) WHERE name = '{1}' AND value {2} {3})",
-                                            GetInclusionOperator(split[1].Trim().ToLower()), split[0], NegateIfNonInclusion(split[1].Trim().ToLower()), EnsureQuotes(split[2].Trim()));
+                                        sql.AppendFormat("id {0} (SELECT logId FROM [Journal].log_property with (nolock) WHERE name = {1} AND value {2} {3})",
+                                            GetInclusionOperator(split[1].Trim().ToLower()), AddParameter(parameters, split[0]), NegateIfNonInclusion(split[1].Trim().ToLower()), AddParameter(parameters, StripQuotes(split[2].Trim())));
                                     }
                                 }
                                 else if (split.Length == 1)
                                 {
                                     // If we get here, then we received just a string. We will search the message column, exception column and all props for matches
+                                    var param = AddParameter(parameters, $"%{split[0].Trim()}%");
                                     sql.AppendFormat(
-                                        "(message LIKE '%{0}%' OR exception LIKE '%{0}%' OR " +
-                                        "id in (SELECT logId FROM [Journal].log_property with (nolock) WHERE value LIKE '%{0}%'))",
-                                        split[0].Trim());
+                                        "(message LIKE {0} OR exception LIKE {0} OR " +
+                                        "id in (SELECT logId FROM [Journal].log_property with (nolock) WHERE value LIKE {0}))",
+                                        param);
                                 }
                             }
                             else
@@ -284,23 +294,19 @@ ORDER BY l.timestamp DESC, p.name";
                     ? "LIKE"
                     : op.ToUpper();
 
-        // "..."  -->  '...'
-        //  ...   -->  '...'
-        // '...'  -->  '...'
-        private static string EnsureQuotes(string value)
+        // "..."  -->  ...
+        // '...'  -->  ...
+        //  ...   -->  ...
+        private static string StripQuotes(string value)
+            => value.Length >= 2 && (value[0] == '"' || value[0] == '\'') && value[value.Length - 1] == value[0]
+                ? value.Substring(1, value.Length - 2)
+                : value;
+
+        private static string AddParameter(DynamicParameters parameters, string value)
         {
-            if (value[0] == '"' && value[value.Length - 1] == '"')
-            {
-                return $"'{value.Substring(1, value.Length - 2)}'";
-            }
-            else if (value[0] != '\'' && value[value.Length - 1] != '\'')
-            {
-                return $"'{value}'";
-            }
-            else
-            {
-                return value;
-            }
+            var name = $"@q{parameters.ParameterNames.Count()}";
+            parameters.Add(name, value);
+            return name;
         }
 
     }
