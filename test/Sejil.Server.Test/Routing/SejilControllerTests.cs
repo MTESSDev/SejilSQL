@@ -56,10 +56,10 @@ namespace SejilSQL.Test.Routing
             var controller = CreateController(CreateContextMoq().contextMoq.Object, repositoryMoq.Object, Mock.Of<ISejilSettings>());
 
             // Act
-            await controller.GetEventsAsync(page, startingTimestamp, new LogQueryFilter());
+            await controller.GetEventsAsync(page, null, startingTimestamp, new LogQueryFilter());
 
             // Assert
-            repositoryMoq.Verify(p => p.GetEventsPageAsync(page, startingTimestamp, It.IsAny<LogQueryFilter>()), Times.Once);
+            repositoryMoq.Verify(p => p.GetEventsPageAsync(page, startingTimestamp, It.IsAny<LogQueryFilter>(), It.IsAny<int?>()), Times.Once);
         }
 
         [Fact]
@@ -73,10 +73,10 @@ namespace SejilSQL.Test.Routing
             var controller = CreateController(CreateContextMoq().contextMoq.Object, repositoryMoq.Object, Mock.Of<ISejilSettings>());
 
             // Act
-            await controller.GetEventsAsync(page, startingTimestamp, new LogQueryFilter());
+            await controller.GetEventsAsync(page, null, startingTimestamp, new LogQueryFilter());
 
             // Assert
-            repositoryMoq.Verify(p => p.GetEventsPageAsync(page + 1, startingTimestamp, It.IsAny<LogQueryFilter>()), Times.Once);
+            repositoryMoq.Verify(p => p.GetEventsPageAsync(page + 1, startingTimestamp, It.IsAny<LogQueryFilter>(), It.IsAny<int?>()), Times.Once);
         }
 
         [Fact]
@@ -93,10 +93,10 @@ namespace SejilSQL.Test.Routing
             var controller = CreateController(CreateContextMoq().contextMoq.Object, repositoryMoq.Object, Mock.Of<ISejilSettings>());
 
             // Act
-            await controller.GetEventsAsync(1, null, qf);
+            await controller.GetEventsAsync(1, null, null, qf);
 
             // Assert
-            repositoryMoq.Verify(p => p.GetEventsPageAsync(1, null, It.Is<LogQueryFilter>(f => f == qf)), Times.Once);
+            repositoryMoq.Verify(p => p.GetEventsPageAsync(1, null, It.Is<LogQueryFilter>(f => f == qf), It.IsAny<int?>()), Times.Once);
         }
 
         [Fact]
@@ -105,12 +105,12 @@ namespace SejilSQL.Test.Routing
             // Arrange
             var (logEntries, logEntriesJson) = GetTestLogEntries();
             var repositoryMoq = new Mock<ISejilRepository>();
-            repositoryMoq.Setup(p => p.GetEventsPageAsync(1, null, null)).ReturnsAsync(logEntries);
+            repositoryMoq.Setup(p => p.GetEventsPageAsync(1, null, null, It.IsAny<int?>())).ReturnsAsync(logEntries);
             var (contextMoq, responseMoq, bodyMoq) = CreateContextMoq();
             var controller = CreateController(contextMoq.Object, repositoryMoq.Object, Mock.Of<ISejilSettings>());
 
             // Act
-            await controller.GetEventsAsync(1, null, null);
+            await controller.GetEventsAsync(1, null, null, null);
 
             // Assert
             responseMoq.VerifySet(p => p.ContentType = "application/json");
@@ -231,7 +231,7 @@ namespace SejilSQL.Test.Routing
         }
 
         [Fact]
-        public void SetMinimumLogLevel_calls_settings_TrySetMinimumLogLevel()
+        public async Task SetMinimumLogLevelAsync_calls_settings_TrySetMinimumLogLevel()
         {
             // Arrange
             var logLevel = "info";
@@ -239,7 +239,7 @@ namespace SejilSQL.Test.Routing
             var controller = CreateController(CreateContextMoq().contextMoq.Object, Mock.Of<ISejilRepository>(), settingsMoq.Object);
 
             // Act
-            controller.SetMinimumLogLevel(logLevel);
+            await controller.SetMinimumLogLevelAsync(logLevel);
 
             // Assert
             settingsMoq.Verify(p => p.TrySetMinimumLogLevel(logLevel), Times.Once);
@@ -248,7 +248,7 @@ namespace SejilSQL.Test.Routing
         [Theory]
         [InlineData(true, StatusCodes.Status200OK)]
         [InlineData(false, StatusCodes.Status400BadRequest)]
-        public void SetMinimumLogLevel_sets_status_code_based_on_save_operation_success(bool saveOperationResult, int expectedStatusCode)
+        public async Task SetMinimumLogLevelAsync_sets_status_code_based_on_save_operation_success(bool saveOperationResult, int expectedStatusCode)
         {
             // Arrange
             var settingsMoq = new Mock<ISejilSettings>();
@@ -257,10 +257,93 @@ namespace SejilSQL.Test.Routing
             var controller = CreateController(contextMoq.Object, Mock.Of<ISejilRepository>(), settingsMoq.Object);
 
             // Act
-            controller.SetMinimumLogLevel("info");
+            await controller.SetMinimumLogLevelAsync("info");
 
             // Assert
             responseMoq.VerifySet(p => p.StatusCode = expectedStatusCode);
+        }
+
+        [Fact]
+        public async Task SetMinimumLogLevelAsync_rejects_empty_body_without_calling_settings()
+        {
+            // Arrange
+            var settingsMoq = new Mock<ISejilSettings>();
+            var (contextMoq, responseMoq, _) = CreateContextMoq();
+            var controller = CreateController(contextMoq.Object, Mock.Of<ISejilRepository>(), settingsMoq.Object);
+
+            // Act
+            await controller.SetMinimumLogLevelAsync(null);
+
+            // Assert
+            responseMoq.VerifySet(p => p.StatusCode = StatusCodes.Status400BadRequest);
+            settingsMoq.Verify(p => p.TrySetMinimumLogLevel(It.IsAny<string>()), Times.Never);
+        }
+
+        [Fact]
+        public async Task SetMinimumLogLevelAsync_persists_the_level_when_LevelId_is_set()
+        {
+            // Arrange
+            var settings = new SejilSettings("/sejil", LogEventLevel.Debug) { LevelId = "OIM" };
+            var repoMoq = new Mock<ISejilRepository>();
+            var controller = CreateController(CreateContextMoq().contextMoq.Object, repoMoq.Object, settings);
+
+            // Act
+            await controller.SetMinimumLogLevelAsync("\"Warning\"");
+
+            // Assert
+            repoMoq.Verify(p => p.SetLogLevelAsync("OIM", "Warning"), Times.Once);
+        }
+
+        [Fact]
+        public async Task SetMinimumLogLevelAsync_does_not_persist_when_LevelId_is_not_set()
+        {
+            // Arrange
+            var settings = new SejilSettings("/sejil", LogEventLevel.Debug);
+            var repoMoq = new Mock<ISejilRepository>();
+            var controller = CreateController(CreateContextMoq().contextMoq.Object, repoMoq.Object, settings);
+
+            // Act
+            await controller.SetMinimumLogLevelAsync("Warning");
+
+            // Assert
+            repoMoq.Verify(p => p.SetLogLevelAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+            Assert.Equal(LogEventLevel.Warning, settings.LoggingLevelSwitch.MinimumLevel);
+        }
+
+        [Fact]
+        public async Task GetMinimumLogLevelAsync_returns_the_persisted_level_when_LevelId_is_set()
+        {
+            // Arrange
+            var settings = new SejilSettings("/sejil", LogEventLevel.Debug) { LevelId = "OIM" };
+            var repoMoq = new Mock<ISejilRepository>();
+            repoMoq.Setup(p => p.GetLogLevelAsync("OIM")).ReturnsAsync("Error");
+            var context = new DefaultHttpContext();
+            context.Response.Body = new MemoryStream();
+            var controller = CreateController(context, repoMoq.Object, settings);
+
+            // Act
+            await controller.GetMinimumLogLevelAsync();
+
+            // Assert
+            Assert.Equal("{\"minimumLogLevel\":\"Error\"}", ReadBody(context));
+        }
+
+        [Fact]
+        public async Task GetMinimumLogLevelAsync_falls_back_to_the_in_memory_level_when_nothing_is_persisted()
+        {
+            // Arrange
+            var settings = new SejilSettings("/sejil", LogEventLevel.Debug) { LevelId = "OIM" };
+            var repoMoq = new Mock<ISejilRepository>();
+            repoMoq.Setup(p => p.GetLogLevelAsync("OIM")).ReturnsAsync((string)null);
+            var context = new DefaultHttpContext();
+            context.Response.Body = new MemoryStream();
+            var controller = CreateController(context, repoMoq.Object, settings);
+
+            // Act
+            await controller.GetMinimumLogLevelAsync();
+
+            // Assert
+            Assert.Equal("{\"minimumLogLevel\":\"Debug\"}", ReadBody(context));
         }
 
         [Fact]
@@ -299,6 +382,12 @@ namespace SejilSQL.Test.Routing
             responseMoq.VerifySet(p => p.ContentType = "application/json");
             var data = Encoding.UTF8.GetBytes(responseJson);
             bodyMoq.Verify(p => p.WriteAsync(data, 0, data.Length, It.IsAny<CancellationToken>()), Times.Once);
+        }
+
+        private static string ReadBody(HttpContext context)
+        {
+            context.Response.Body.Position = 0;
+            return new StreamReader(context.Response.Body).ReadToEnd();
         }
 
         private ISejilController CreateController(HttpContext context, ISejilRepository repository, ISejilSettings settings)

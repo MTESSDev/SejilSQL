@@ -27,6 +27,13 @@ namespace SejilSQL.Data.Internal
         public string DeleteQuerySql()
             => "DELETE FROM [Journal].log_query WHERE name = @name";
 
+        public string GetLogLevelSql()
+            => "SELECT value FROM [Journal].log_config WHERE id = @id";
+
+        public string SetLogLevelSql()
+            => "UPDATE [Journal].log_config SET value = @value WHERE id = @id " +
+               "IF @@ROWCOUNT = 0 INSERT INTO [Journal].log_config (id, value) VALUES (@id, @value)";
+
         public string GetPagedLogEntriesSql(int page, int pageSize, DateTime? startingTimestamp, LogQueryFilter queryFilter, DynamicParameters parameters)
         {
             if (parameters == null)

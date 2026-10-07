@@ -13,5 +13,7 @@ namespace SejilSQL.Data.Internal
         string GetSavedQueriesSql();
         string GetPagedLogEntriesSql(int page, int pageSize, DateTime? startingTimestamp, LogQueryFilter queryFilter, DynamicParameters parameters);
         string DeleteQuerySql();
+        string GetLogLevelSql();
+        string SetLogLevelSql();
     }
 }

@@ -28,6 +28,9 @@ namespace SejilSQL.Configuration
         /// </summary>
         public string AuthenticationScheme { get; set; }
         public int LogRetentionDays { get; set; } = 30;
+        public string IngestPath { get; set; } = "/log";
+        public string LevelId { get; set; }
+        public string LevelPath { get; set; }
 
         public SejilSettings(string uri, LogEventLevel minLogLevel)
         {

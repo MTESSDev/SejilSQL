@@ -23,9 +23,8 @@ namespace Sample
         public void ConfigureServices(IServiceCollection services)
         {
 
-            services.AddHostedService<SejilCleanupService>();
             services.AddControllersWithViews();
-            services.AddSingleton<SejilService>();
+            services.AddSejilServices();   // receives the logs on POST /log and deletes the old ones
             services.ConfigureSejil(options => 
             {
                 options.Title = "Logs";

@@ -100,5 +100,39 @@ namespace SejilSQL.Data.Internal
                 }
             }
         }
+
+        public async Task<string> GetLogLevelAsync(string id)
+        {
+            using (var conn = new SqlConnection(_connectionString))
+            {
+                await conn.OpenAsync();
+                using (var cmd = conn.CreateCommand())
+                {
+                    cmd.CommandText = _sql.GetLogLevelSql();
+                    cmd.CommandType = CommandType.Text;
+                    cmd.Parameters.AddWithValue("@id", LevelKey(id));
+                    return (await cmd.ExecuteScalarAsync()) as string;
+                }
+            }
+        }
+
+        public async Task SetLogLevelAsync(string id, string level)
+        {
+            using (var conn = new SqlConnection(_connectionString))
+            {
+                await conn.OpenAsync();
+                using (var cmd = conn.CreateCommand())
+                {
+                    cmd.CommandText = _sql.SetLogLevelSql();
+                    cmd.CommandType = CommandType.Text;
+                    cmd.Parameters.AddWithValue("@id", LevelKey(id));
+                    cmd.Parameters.AddWithValue("@value", level);
+                    await cmd.ExecuteNonQueryAsync();
+                }
+            }
+        }
+
+        // log_config.id is 20 characters wide.
+        private static string LevelKey(string id) => id.Length > 20 ? id.Substring(0, 20) : id;
     }
 }

@@ -75,24 +75,39 @@ namespace SejilSQL
                     await controller.GetQueriesAsync();
                 });
 
-                routes.MapGet($"{url}/min-log-level", async context =>
+                // Minimum log level: anonymous, read by the applications that send their logs.
+                RequestDelegate getMinLogLevel = async context =>
                 {
                     var controller = GetSejilController(context);
                     await controller.GetMinimumLogLevelAsync();
-                });
+                };
+                RequestDelegate setMinLogLevel = async context =>
+                {
+                    var minLogLevel = await GetRequestBodyAsync(context.Request);
+                    var controller = GetSejilController(context);
+                    await controller.SetMinimumLogLevelAsync(minLogLevel);
+                };
+
+                routes.MapGet($"{url}/min-log-level", getMinLogLevel);
+                routes.MapPost($"{url}/min-log-level", setMinLogLevel);
+
+                if (!String.IsNullOrWhiteSpace(settings.LevelPath))
+                {
+                    routes.MapGet(settings.LevelPath.Trim('/'), getMinLogLevel);
+                    routes.MapPost(settings.LevelPath.Trim('/'), setMinLogLevel);
+                }
+
+                // Batches sent by Serilog.Sinks.Http: anonymous, the applications have no identity to present.
+                if (!String.IsNullOrWhiteSpace(settings.IngestPath))
+                {
+                    routes.MapPost(settings.IngestPath.Trim('/'), SejilIngest.HandleAsync);
+                }
 
                 routes.MapGet($"{url}/user-name", RequireAuthentication(settings, async context =>
                 {
                     var controller = GetSejilController(context);
                     await controller.GetUserNameAsync();
                 }));
-
-                routes.MapPost($"{url}/min-log-level", async context =>
-                {
-                    var minLogLevel = await GetRequestBodyAsync(context.Request);
-                    var controller = GetSejilController(context);
-                    controller.SetMinimumLogLevel(minLogLevel);
-                });
 
                 routes.MapPost($"{url}/del-query", RequireAuthentication(settings, async context =>
                 {

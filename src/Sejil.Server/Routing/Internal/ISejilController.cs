@@ -15,7 +15,7 @@ namespace SejilSQL.Routing.Internal
         Task SaveQueryAsync(LogQuery logQuery);
         Task GetQueriesAsync();
         Task GetMinimumLogLevelAsync();
-        void SetMinimumLogLevel(string minLogLevel);
+        Task SetMinimumLogLevelAsync(string minLogLevel);
         Task DeleteQueryAsync(string queryName);
         Task GetUserNameAsync();
         Task GetTitleAsync();

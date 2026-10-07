@@ -11,7 +11,6 @@ using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Moq;
-using Newtonsoft.Json;
 using SejilSQL.Configuration;
 using SejilSQL.Models.Internal;
 using SejilSQL.Routing.Internal;

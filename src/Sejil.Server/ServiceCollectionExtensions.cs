@@ -1,4 +1,7 @@
-﻿using SejilSQL.Configuration;
+﻿using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Hosting;
+using SejilSQL.Configuration;
+using SejilSQL.Service;
 using System;
 
 namespace Microsoft.Extensions.DependencyInjection
@@ -8,6 +11,18 @@ namespace Microsoft.Extensions.DependencyInjection
     /// </summary>
     public static class ServiceCollectionExtensions
     {
+        /// <summary>
+        /// Registers what a host needs to receive logs and keep the table small: <see cref="SejilService"/>
+        /// (used by the ingest route) and the hosted service that deletes events older than <c>LogRetentionDays</c>.
+        /// Safe to call when the host already registered <see cref="SejilService"/> itself.
+        /// </summary>
+        public static IServiceCollection AddSejilServices(this IServiceCollection services)
+        {
+            services.TryAddSingleton<SejilService>();
+            services.TryAddEnumerable(ServiceDescriptor.Singleton<IHostedService, SejilCleanupService>());
+            return services;
+        }
+
         /// <summary>
         /// Configure Sejil
         /// </summary>

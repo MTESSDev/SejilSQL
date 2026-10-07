@@ -60,9 +60,15 @@ namespace SejilSQL.Routing.Internal
 
         public async Task GetMinimumLogLevelAsync()
         {
+            var minimumLogLevel = _settings.LoggingLevelSwitch.MinimumLevel.ToString();
+            if (!String.IsNullOrWhiteSpace(_settings.LevelId))
+            {
+                minimumLogLevel = await _repository.GetLogLevelAsync(_settings.LevelId) ?? minimumLogLevel;
+            }
+
             var response = new
             {
-                MinimumLogLevel = _settings.LoggingLevelSwitch.MinimumLevel.ToString()
+                MinimumLogLevel = minimumLogLevel
             };
             _context.Response.ContentType = "application/json";
             await _context.Response.WriteAsync(JsonSerializer.Serialize(response, ApplicationBuilderExtensions._camelCaseJson));
@@ -81,10 +87,24 @@ namespace SejilSQL.Routing.Internal
             await _context.Response.WriteAsync(JsonSerializer.Serialize(response, ApplicationBuilderExtensions._camelCaseJson));
         }
 
-        public void SetMinimumLogLevel(string minLogLevel) => 
-            _context.Response.StatusCode = _settings.TrySetMinimumLogLevel(minLogLevel)
-                ? StatusCodes.Status200OK
-                : StatusCodes.Status400BadRequest;
+        public async Task SetMinimumLogLevelAsync(string minLogLevel)
+        {
+            // The body is the bare level name, possibly quoted when sent as a JSON string.
+            minLogLevel = minLogLevel?.Trim().Trim('"');
+
+            if (String.IsNullOrWhiteSpace(minLogLevel) || !_settings.TrySetMinimumLogLevel(minLogLevel))
+            {
+                _context.Response.StatusCode = StatusCodes.Status400BadRequest;
+                return;
+            }
+
+            if (!String.IsNullOrWhiteSpace(_settings.LevelId))
+            {
+                await _repository.SetLogLevelAsync(_settings.LevelId, _settings.LoggingLevelSwitch.MinimumLevel.ToString());
+            }
+
+            _context.Response.StatusCode = StatusCodes.Status200OK;
+        }
 
         public async Task DeleteQueryAsync(string queryName)
             => await _repository.DeleteQueryAsync(queryName);

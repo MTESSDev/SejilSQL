@@ -189,9 +189,9 @@ namespace SejilSQL.Test.Logging.Sinks
             // Hello, {name}. Your # is {number}
             var tokens = new List<MessageTemplateToken>
             {
-                new TextToken("Hello, ", 0),
+                new TextToken("Hello, "),
                 new PropertyToken("name", "{name}"),
-                new TextToken(". Your # is ", 13),
+                new TextToken(". Your # is "),
                 new PropertyToken("number", "{number}"),
             };
 
@@ -216,7 +216,7 @@ namespace SejilSQL.Test.Logging.Sinks
             await sink.CallEmitBatchAsync(events);
 
             // Assert
-            var logEvents = await repository.GetEventsPageAsync(1, null, null);
+            var logEvents = await repository.GetEventsPageAsync(1, null, null, null);
             Assert.Equal(2, logEvents.Count());
 
             var logEvent1 = logEvents.FirstOrDefault(p => p.Level == "Information");
@@ -283,7 +283,7 @@ namespace SejilSQL.Test.Logging.Sinks
             await sink.CallEmitBatchAsync(events);
 
             // Assert
-            var logEvents = await repository.GetEventsPageAsync(1, null, null);
+            var logEvents = await repository.GetEventsPageAsync(1, null, null, null);
             Assert.Empty(logEvents);
         }
 

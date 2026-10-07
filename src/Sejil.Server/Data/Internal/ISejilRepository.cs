@@ -14,5 +14,9 @@ namespace SejilSQL.Data.Internal
         Task<IEnumerable<LogQuery>> GetSavedQueriesAsync();
         Task<IEnumerable<LogEntry>> GetEventsPageAsync(int page, DateTime? startingTimestamp, LogQueryFilter queryFilter, int? pageSize);
         Task<bool> DeleteQueryAsync(string queryName);
+
+        /// <summary>The minimum log level persisted under <paramref name="id"/>, or null when there is none.</summary>
+        Task<string> GetLogLevelAsync(string id);
+        Task SetLogLevelAsync(string id, string level);
     }
 }

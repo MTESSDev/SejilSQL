@@ -67,7 +67,7 @@ namespace SejilSQL.Test
 
             // Assert
             controllerMoq.Verify(p => p.GetEventsAsync(
-                expectedPageArg, expectedstartingTsArg, It.Is<LogQueryFilter>(qf =>
+                expectedPageArg, It.IsAny<int?>(), expectedstartingTsArg, It.Is<LogQueryFilter>(qf =>
                 qf.QueryText == expectedQueryFilterArg.QueryText &&
                 qf.DateFilter == expectedQueryFilterArg.DateFilter &&
                 Join(qf.DateRangeFilter) == Join(expectedQueryFilterArg.DateRangeFilter))), Times.Once);
@@ -127,7 +127,7 @@ namespace SejilSQL.Test
             await server.CreateClient().PostAsync(target, content);
 
             // Assert
-            controllerMoq.Verify(p => p.SetMinimumLogLevel(targetMinLogLevel), Times.Once);
+            controllerMoq.Verify(p => p.SetMinimumLogLevelAsync(targetMinLogLevel), Times.Once);
         }
 
         [Fact]
