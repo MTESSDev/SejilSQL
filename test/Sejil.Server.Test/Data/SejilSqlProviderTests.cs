@@ -98,6 +98,97 @@ namespace SejilSQL.Test.Data
             Assert.Equal($"Argument must be greater than zero. (Parameter 'pageSize')", ex.Message);
         }
 
+        [Theory]
+        [InlineData(1, 100, "OFFSET 0 ROWS FETCH NEXT 100 ROWS ONLY")]
+        [InlineData(2, 100, "OFFSET 100 ROWS FETCH NEXT 100 ROWS ONLY")]
+        [InlineData(3, 50, "OFFSET 100 ROWS FETCH NEXT 50 ROWS ONLY")]
+        public void GetPagedLogEntriesSql_skips_the_previous_pages(int page, int pageSize, string expectedPaging)
+        {
+            var provider = new SejilSqlProvider(Mock.Of<ISejilSettings>());
+
+            var sql = provider.GetPagedLogEntriesSql(page, pageSize, null, null, new DynamicParameters());
+
+            Assert.Contains(expectedPaging, sql);
+            // a total order, otherwise events sharing a timestamp could be repeated or skipped from one page to the next
+            Assert.Contains("ORDER BY timestamp DESC, id DESC", sql);
+            Assert.DoesNotContain("TOP", sql);
+        }
+
+        [Fact]
+        public void GetPagedLogEntriesSql_does_not_sort_the_wide_rows_by_property_name()
+        {
+            var provider = new SejilSqlProvider(Mock.Of<ISejilSettings>());
+
+            var sql = provider.GetPagedLogEntriesSql(1, 100, null, null, new DynamicParameters());
+
+            // sorting the joined rows (message and exception are nvarchar(max)) makes SQL Server wait for a big memory grant
+            Assert.DoesNotContain("p.name", sql.Substring(sql.LastIndexOf("ORDER BY l.timestamp", StringComparison.Ordinal)));
+            Assert.EndsWith("OPTION (LOOP JOIN)", sql.TrimEnd());
+        }
+
+        [Theory]
+        [InlineData("formulaire")]                           // contains "or"
+        [InlineData("brandname")]                            // contains "and"
+        [InlineData("unlikely")]                             // contains "like"
+        [InlineData("Authentification")]
+        public void GetPagedLogEntriesSql_searches_a_single_word_that_contains_an_operator_as_a_whole(string word)
+        {
+            var provider = new SejilSqlProvider(Mock.Of<ISejilSettings>(p => p.NonPropertyColumns == new string[0]));
+            var parameters = new DynamicParameters();
+
+            var sql = provider.GetPagedLogEntriesSql(1, 100, null, new LogQueryFilter { QueryText = word }, parameters);
+
+            var name = Assert.Single(parameters.ParameterNames);
+            Assert.Equal($"%{word}%", parameters.Get<string>(name));
+            Assert.Contains($"message LIKE @{name} OR exception LIKE @{name}", sql);
+        }
+
+        [Theory]
+        [InlineData("level = Error", 4)]
+        [InlineData("level != debug", 1)]
+        [InlineData("LEVEL = Fatal", 5)]
+        [InlineData("level = Critical", 5)]
+        [InlineData("level = Trace", 0)]
+        [InlineData("level = 3", 3)]
+        public void GetPagedLogEntriesSql_compares_the_level_column_as_a_number(string query, int expected)
+        {
+            var provider = new SejilSqlProvider(Mock.Of<ISejilSettings>(p => p.NonPropertyColumns == new[] { "level" }));
+            var parameters = new DynamicParameters();
+
+            provider.GetPagedLogEntriesSql(1, 100, null, new LogQueryFilter { QueryText = query }, parameters);
+
+            Assert.Equal(expected, parameters.Get<int>("q0"));
+        }
+
+        [Fact]
+        public void GetPagedLogEntriesSql_does_not_split_a_value_on_an_operator_inside_a_word()
+        {
+            var provider = new SejilSqlProvider(Mock.Of<ISejilSettings>(p => p.NonPropertyColumns == new string[0]));
+            var parameters = new DynamicParameters();
+
+            var sql = provider.GetPagedLogEntriesSql(1, 100, null, new LogQueryFilter { QueryText = "RequestPath like '%formulaires%'" }, parameters);
+
+            Assert.Equal(new[] { "q0", "q1" }, parameters.ParameterNames);
+            Assert.Equal("RequestPath", parameters.Get<string>("q0"));
+            Assert.Equal("%formulaires%", parameters.Get<string>("q1"));
+            Assert.Contains("value LIKE @q1", sql);
+        }
+
+        [Theory]
+        [InlineData("UserName = bob and Duree = 3")]
+        [InlineData("UserName = bob AND Duree = 3")]
+        [InlineData("UserName = bob && Duree = 3")]
+        public void GetPagedLogEntriesSql_still_splits_on_the_operator_words_in_any_case(string query)
+        {
+            var provider = new SejilSqlProvider(Mock.Of<ISejilSettings>(p => p.NonPropertyColumns == new string[0]));
+            var parameters = new DynamicParameters();
+
+            var sql = provider.GetPagedLogEntriesSql(1, 100, null, new LogQueryFilter { QueryText = query }, parameters);
+
+            Assert.Equal(new[] { "q0", "q1", "q2", "q3" }, parameters.ParameterNames);
+            Assert.Contains(") AND id IN (", sql);
+        }
+
         [Fact]
         public void GetPagedLogEntriesSql_returns_correct_sql_for_page()
         {

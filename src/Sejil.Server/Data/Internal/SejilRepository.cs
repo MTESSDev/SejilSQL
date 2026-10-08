@@ -82,6 +82,12 @@ namespace SejilSQL.Data.Internal
 
                     }, param: parameters, splitOn: "Id, timestamp");
 
+                // The query does not sort the properties (see SejilSqlProvider): they come back by name from here.
+                foreach (var entry in lookup.Values)
+                {
+                    entry.Properties.Sort((a, b) => string.Compare(a.Name, b.Name, StringComparison.OrdinalIgnoreCase));
+                }
+
                 return lookup.Values.AsEnumerable();
             }
         }

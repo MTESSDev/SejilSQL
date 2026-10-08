@@ -57,13 +57,18 @@ namespace SejilSQL.Data.Internal
             return
 $@"SELECT l.*, p.* from 
 (
-    SELECT TOP {pageSize} * FROM [Journal].log with (nolock)
+    SELECT * FROM [Journal].log with (nolock)
     {timestampWhereClause}
     {queryWhereClause}{FiltersWhereClause()}
-    ORDER BY timestamp DESC
+    ORDER BY timestamp DESC, id DESC
+    OFFSET {(long)(page - 1) * pageSize} ROWS FETCH NEXT {pageSize} ROWS ONLY
 ) l
 LEFT JOIN [Journal].log_property p with (nolock) ON l.timestamp = p.timestamp AND l.id = p.logId
-ORDER BY l.timestamp DESC, p.name";
+ORDER BY l.timestamp DESC, l.id DESC
+OPTION (LOOP JOIN)";
+            // Never sort by property name here: the rows carry message and exception (nvarchar(max)), so that sort asks for a huge
+            // memory grant, and on a busy server the request waits about 25 seconds before it is granted. The properties of an
+            // event are sorted by name in SejilRepository instead. LOOP JOIN keeps the order of the page, with no sort at all.
 
             string TimestampWhereClause()
             {
@@ -147,38 +152,39 @@ ORDER BY l.timestamp DESC, p.name";
 
             void BuildPredicateCore(string query, StringBuilder sql)
             {
+                // and, or and like are whole words (a name such as "formulaire" contains "or"), whatever their case.
                 // (...) && (...)  -or-  (...) and (...)
                 // (...) || (...)  -or-  (...) or (...)
-                var split = Regex.Split(query, @"(\(.+\))\s*(\|\||&&|and|or)\s*(\(.+\))").Where(p => !String.IsNullOrWhiteSpace(p)).ToArray();
+                var split = Regex.Split(query, @"(\(.+\))\s*(\|\||&&|\band\b|\bor\b)\s*(\(.+\))", RegexOptions.IgnoreCase).Where(p => !String.IsNullOrWhiteSpace(p)).ToArray();
                 if (split.Length != 3)
                 {
                     // ... && (...)  -or-  ... and (...)
                     // ... || (...)  -or-  ... or (...)
-                    split = Regex.Split(query, @"(.+)\s*(\|\||&&|and|or)\s*(\(.+\))").Where(p => !String.IsNullOrWhiteSpace(p)).ToArray();
+                    split = Regex.Split(query, @"(.+)\s*(\|\||&&|\band\b|\bor\b)\s*(\(.+\))", RegexOptions.IgnoreCase).Where(p => !String.IsNullOrWhiteSpace(p)).ToArray();
                     if (split.Length != 3)
                     {
                         // (...) && ...  -or-  (...) and ..
                         // (...) || ...  -or-  (...) or ..
-                        split = Regex.Split(query, @"(\(.+\))\s*(\|\||&&|and|or)\s*(.+)").Where(p => !String.IsNullOrWhiteSpace(p)).ToArray();
+                        split = Regex.Split(query, @"(\(.+\))\s*(\|\||&&|\band\b|\bor\b)\s*(.+)", RegexOptions.IgnoreCase).Where(p => !String.IsNullOrWhiteSpace(p)).ToArray();
                         if (split.Length != 3)
                         {
                             // ... && ...  -or-  ... and ...
                             // ... || ...  -or-  ... or ...
-                            split = Regex.Split(query, @"(.+)\s*(\|\||&&|and|or)\s*(.+)").Where(p => !String.IsNullOrWhiteSpace(p)).ToArray();
+                            split = Regex.Split(query, @"(.+)\s*(\|\||&&|\band\b|\bor\b)\s*(.+)", RegexOptions.IgnoreCase).Where(p => !String.IsNullOrWhiteSpace(p)).ToArray();
                             if (split.Length != 3)
                             {
                                 // name = value
                                 // name != value
                                 // name like 'value'
                                 // name not like 'value'
-                                split = Regex.Split(query, @"(\w+)\s*(=|!=|\s*like\s*|\s*not like\s*)\s*(.+)").Where(p => !String.IsNullOrWhiteSpace(p)).ToArray();
+                                split = Regex.Split(query, @"(\w+)\s*(=|!=|\blike\b|\bnot like\b)\s*(.+)", RegexOptions.IgnoreCase).Where(p => !String.IsNullOrWhiteSpace(p)).ToArray();
                                 if (split.Length == 3)
                                 {
                                     if (nonPropertyColumns.Contains(split[0].ToLower()))
                                     {
                                         // Column name is safe here: it matched \w+ and is whitelisted by nonPropertyColumns.
                                         sql.AppendFormat("{0} {1} {2}",
-                                            split[0], split[1].ToUpper().Trim(), AddParameter(parameters, split[2].Trim('"', ' ', '\'')));
+                                            split[0], split[1].ToUpper().Trim(), AddParameter(parameters, ColumnValue(split[0], split[2].Trim('"', ' ', '\''))));
                                     }
                                     else
                                     {
@@ -309,7 +315,26 @@ ORDER BY l.timestamp DESC, p.name";
                 ? value.Substring(1, value.Length - 2)
                 : value;
 
-        private static string AddParameter(DynamicParameters parameters, string value)
+        // The level column holds a number: let a query say "level = Error" (or Critical, or Trace) as well as "level = 4".
+        private static object ColumnValue(string column, string value)
+        {
+            if (!column.Equals("level", StringComparison.OrdinalIgnoreCase))
+            {
+                return value;
+            }
+
+            switch (value.ToLowerInvariant())
+            {
+                case "trace": return (int)LogEventLevel.Verbose;
+                case "critical": return (int)LogEventLevel.Fatal;
+            }
+
+            return Enum.TryParse(value, true, out LogEventLevel level) && Enum.IsDefined(typeof(LogEventLevel), level)
+                ? (object)(int)level
+                : value;
+        }
+
+        private static string AddParameter(DynamicParameters parameters, object value)
         {
             var name = $"@q{parameters.ParameterNames.Count()}";
             parameters.Add(name, value);

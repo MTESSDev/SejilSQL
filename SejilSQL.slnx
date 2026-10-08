@@ -1,0 +1,18 @@
+<Solution>
+  <Configurations>
+    <Platform Name="Any CPU" />
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Folder Name="/sample/">
+    <Project Path="sample/SampleBasic/SampleBasic.csproj" />
+    <Project Path="sample/SampleBasicAuth/SampleBasicAuth.csproj" />
+    <Project Path="sample/SampleOIDCAuth/SampleOIDCAuth.csproj" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src/Sejil.Server/SejilSQL.csproj" />
+  </Folder>
+  <Folder Name="/test/">
+    <Project Path="test/Sejil.Server.Test/Sejil.Test.csproj" />
+  </Folder>
+</Solution>
