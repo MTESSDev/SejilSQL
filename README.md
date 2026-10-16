@@ -13,6 +13,7 @@ It is a fork of [Sejil](https://github.com/alaatm/Sejil) by Alaa Masoud (SQLite,
 - **Filters** by period, date range, level and "events with an exception".
 - **Collects the logs of other applications** (`POST /log`), writes them in one round trip, and deletes the old ones.
 - **A minimum log level shared by the applications**, changed from the viewer.
+- **A Serilog sink that writes straight to the database**, for the applications that cannot or do not want to go through a site: `WriteTo.SejilSql(...)`, or just configuration.
 
 <img src="./assets/viewer-dark.png" width="900" alt="The dark theme">
 
@@ -69,6 +70,32 @@ With `AddSejilServices()`, the site answers `POST /log?sourceApp=<name>` with th
 - A batch is written atomically, in a single round trip (1000 events with 10 properties each take about half a second over the network, against minutes one row at a time). When it cannot be written the answer is `503`, so the sender keeps the batch and retries without creating duplicates.
 - Property values are stored as text exactly as the sender wrote them, whatever the culture of the server: `12.5`, `true`, `2026-10-07T21:48:00Z`; an object as its JSON text; a JSON `null` as `NULL`.
 
+## Writing straight to the database (no API)
+
+An application that already uses Serilog can write its logs directly to the SejilSQL database, without a site that receives them. Install the package (`dotnet add package SejilSQL`) and replace `.WriteTo.Http(...)` by one line:
+
+```csharp
+Log.Logger = new LoggerConfiguration()
+    .WriteTo.SejilSql("Server=...;Database=Journal;...", "MyApp")   // connection string, application name
+    .CreateLogger();
+```
+
+Or change **no code at all**, when the logger is read from the configuration (`ReadFrom.Configuration`, package `Serilog.Settings.Configuration`):
+
+```json
+"Serilog": {
+  "Using": [ "SejilSQL" ],
+  "WriteTo": [
+    { "Name": "SejilSql", "Args": { "connectionString": "Server=...;Database=Journal;...", "sourceApp": "MyApp" } }
+  ]
+}
+```
+
+- **It never slows the application down.** Events wait in a queue (`queueLimit`, 10000), a background task writes them in batches of up to `batchSize` (200) in one round trip, a batch that cannot be written is kept and tried again every 10 seconds, and when the queue is full the newest events are dropped (reported in the Serilog `SelfLog`). At shutdown the queue is flushed, retrying for `flushTimeoutSeconds` (10) if the database is unreachable.
+- **Same rows as `POST /log`**: the same text for every property value, timestamps in local time, the same tables. A viewer cannot tell the two ways apart, and both can feed the same database.
+- **The shared minimum level** works the same way: give the sink a `levelSwitch` and a `levelId` and the switch follows `[Journal].log_config`, read every `levelPollSeconds` (60). In the configuration: `"LevelSwitches": { "$level": "Verbose" }`, `"MinimumLevel": { "ControlledBy": "$level" }` and `"levelSwitch": "$level", "levelId": "MyApp"` in `Args`.
+- **The login of the application needs `INSERT`** on `[Journal].log` and `[Journal].log_property` (and `SELECT` on `[Journal].log_config` when it reads the level). The tables are created beforehand with [db.sql](./src/Sejil.Server/db.sql). Every instance of the application connects to the database: when it cannot, send the logs to a site with `POST /log` instead.
+
 ## Shared minimum log level
 
 Set `LevelId` on the settings to keep the minimum log level in `[Journal].log_config` instead of in memory. `GET {Url}/min-log-level` then returns `{"minimumLogLevel":"Warning"}` for that identifier, and the level chosen in the viewer is saved under it. Applications read it periodically and apply it to a `LoggingLevelSwitch`. These two routes are anonymous. If `Url` is behind authentication, expose them elsewhere with `LevelPath` (GET and POST).
@@ -94,6 +121,10 @@ Set `LevelId` on the settings to keep the minimum log level in `[Journal].log_co
 - `ISejilController.SetMinimumLogLevel` became `SetMinimumLogLevelAsync`, and `ISejilSettings` gained `IngestPath`, `LevelId` and `LevelPath` (default interface members, nothing to implement).
 - Run [db.sql](./src/Sejil.Server/db.sql) again: it adds `[Journal].log_config`.
 
+### What 3.2 adds
+
+- `WriteTo.SejilSql(connectionString, sourceApp)`: the Serilog sink that writes straight to the database (see above).
+
 ### What 3.1 fixes
 
 - **Paging works again**: since the move to SQL Server, page 2 returned the events of page 1, so scrolling never loaded anything new. Pages are now skipped with `OFFSET`/`FETCH` over a total order (`timestamp`, `id`).
@@ -102,6 +133,7 @@ Set `LevelId` on the settings to keep the minimum log level in `[Journal].log_co
 - **A query can name the level**: `level = Error`, `level != Debug`, as well as `level = 4`. It used to fail, because the column holds a number.
 - The `Verbose` level filter no longer sends an unknown name, and the last day of a date range is included.
 - A new viewer (see above), built from `src/Sejil.Client`.
+- Removed the in-process Serilog sink (`SejilSink`), which was internal and no longer wired to anything, and with it the `Ben.Demystifier` and `Serilog.Sinks.PeriodicBatching` dependencies. The logs reach SejilSQL through `POST /log`.
 
 ## Building
 

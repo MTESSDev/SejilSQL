@@ -4,12 +4,10 @@
 using System;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.DependencyInjection;
-using Serilog;
 using Serilog.Events;
 using SejilSQL.Data.Internal;
 using SejilSQL.Routing.Internal;
 using SejilSQL.Configuration;
-using SejilSQL.Logging;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Configuration;
@@ -28,7 +26,6 @@ namespace Microsoft.AspNetCore.Hosting
         public static IWebHostBuilder AddSejil(this IWebHostBuilder builder, ISejilSettings settings)
         {
             return builder
-              //.ConfigureLogging((logging) => logging.AddSerilog(CreateLogger(settings)))
               .ConfigureServices(services =>
               {
                   services.TryAddSingleton<IHttpContextAccessor, HttpContextAccessor>();
@@ -38,13 +35,6 @@ namespace Microsoft.AspNetCore.Hosting
                   services.AddScoped<ISejilController, SejilController>();
               });
         }
-
-        private static Serilog.Core.Logger CreateLogger(ISejilSettings settings)
-            => new LoggerConfiguration()
-                .Enrich.FromLogContext()
-                .MinimumLevel.ControlledBy(settings.LoggingLevelSwitch)
-                .WriteTo.Sejil(settings)
-                .CreateLogger();
 
     }
 

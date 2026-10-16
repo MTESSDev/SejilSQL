@@ -9,7 +9,6 @@ using System.Threading.Tasks;
 using Serilog.Core;
 using Serilog.Debugging;
 using Serilog.Events;
-using Serilog.Sinks.PeriodicBatching;
 using SejilSQL.Configuration;
 using System.Diagnostics;
 using System.Buffers;
@@ -31,6 +30,9 @@ namespace SejilSQL.Service
 
             //InitializeDatabase();
         }
+
+        // For the in-process Serilog sink, which only writes batches: no settings, no cleanup.
+        internal SejilService(string connectionString) => _connectionString = connectionString;
 
         public async Task EmitBatchAsync(IEnumerable<Event> events, string sourceApp)
             => await TryEmitBatchAsync(events, sourceApp);
@@ -229,7 +231,7 @@ COMMIT;";
             cmd.Parameters["@message"].Value = log.RenderedMessage;
             cmd.Parameters["@level"].Value = (int)log.Level;
             cmd.Parameters["@timestamp"].Value = log.Timestamp;
-            cmd.Parameters["@exception"].Value = log.Exception ?? (object)DBNull.Value; //log.Exception?.Demystify().ToString() ?? (object)DBNull.Value;
+            cmd.Parameters["@exception"].Value = log.Exception ?? (object)DBNull.Value;
 
             return (long)await cmd.ExecuteScalarAsync();
         }
