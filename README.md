@@ -72,29 +72,44 @@ With `AddSejilServices()`, the site answers `POST /log?sourceApp=<name>` with th
 
 ## Writing straight to the database (no API)
 
-An application that already uses Serilog can write its logs directly to the SejilSQL database, without a site that receives them. Install the package (`dotnet add package SejilSQL`) and replace `.WriteTo.Http(...)` by one line:
+An application that already uses Serilog can write its logs directly to the SejilSQL database, without a site that receives them. Install the package (`dotnet add package SejilSQL`), then:
 
-```csharp
-Log.Logger = new LoggerConfiguration()
-    .WriteTo.SejilSql("Server=...;Database=Journal;...", "MyApp")   // connection string, application name
-    .CreateLogger();
-```
-
-Or change **no code at all**, when the logger is read from the configuration (`ReadFrom.Configuration`, package `Serilog.Settings.Configuration`):
+**With no code and no argument**, when the logger is read from the configuration (`ReadFrom.Configuration`, package `Serilog.Settings.Configuration`). The sink only needs its name: Serilog.Settings.Configuration hands it the application configuration, and it reads the rest there.
 
 ```json
-"Serilog": {
-  "Using": [ "SejilSQL" ],
-  "WriteTo": [
-    { "Name": "SejilSql", "Args": { "connectionString": "Server=...;Database=Journal;...", "sourceApp": "MyApp" } }
-  ]
+{
+  "ConnectionStrings": { "SejilSql": "Server=...;Database=Journal;..." },
+  "SejilSql": { "SourceApp": "MyApp", "LevelId": "MyApp" },
+  "Serilog": {
+    "Using": [ "SejilSQL" ],
+    "WriteTo": [ { "Name": "SejilSql" } ]
+  }
 }
 ```
 
-- **It never slows the application down.** Events wait in a queue (`queueLimit`, 10000), a background task writes them in batches of up to `batchSize` (200) in one round trip, a batch that cannot be written is kept and tried again every 10 seconds, and when the queue is full the newest events are dropped (reported in the Serilog `SelfLog`). At shutdown the queue is flushed, retrying for `flushTimeoutSeconds` (10) if the database is unreachable.
+**Or in code**, in place of `.WriteTo.Http(...)`:
+
+```csharp
+.WriteTo.SejilSql("Server=...;Database=Journal;...", "MyApp")   // connection string (or its name in ConnectionStrings), application name
+.WriteTo.SejilSql(configuration: builder.Configuration)         // or: read everything from the configuration
+```
+
+What the sink reads from the configuration (an argument passed in code, or in `Args`, always wins):
+
+| Key | Meaning | Default |
+|---|---|---|
+| `ConnectionStrings:SejilSql` (the native .NET key) or `SejilSql:ConnectionString` | database that holds the `[Journal]` schema | **required** |
+| `SejilSql:SourceApp` | application name shown in the viewer | name of the entry assembly |
+| `SejilSql:LevelId` | follow the shared minimum level of that identifier (see below) | none |
+| `SejilSql:BatchSize` / `QueueLimit` | events per round trip / events waiting | 200 / 10000 |
+| `SejilSql:PeriodSeconds` / `LevelPollSeconds` / `FlushTimeoutSeconds` | wait after a write / read of the level / shutdown retries | 2 / 60 / 10 |
+
+To reuse keys an application already has, name another section: `"Args": { "section": "FRW:Logs" }` reads `FRW:Logs:ConnectionString`, `FRW:Logs:LevelId`, `FRW:Logs:SourceApp`...
+
+- **It never slows the application down.** Events wait in a queue, a background task writes them in batches in one round trip, a batch that cannot be written is kept and tried again every 10 seconds, and when the queue is full the newest events are dropped (reported in the Serilog `SelfLog`). At shutdown the queue is flushed, retrying for `FlushTimeoutSeconds` if the database is unreachable.
 - **Same rows as `POST /log`**: the same text for every property value, timestamps in local time, the same tables. A viewer cannot tell the two ways apart, and both can feed the same database.
-- **The shared minimum level** works the same way: give the sink a `levelSwitch` and a `levelId` and the switch follows `[Journal].log_config`, read every `levelPollSeconds` (60). In the configuration: `"LevelSwitches": { "$level": "Verbose" }`, `"MinimumLevel": { "ControlledBy": "$level" }` and `"levelSwitch": "$level", "levelId": "MyApp"` in `Args`.
-- **The login of the application needs `INSERT`** on `[Journal].log` and `[Journal].log_property` (and `SELECT` on `[Journal].log_config` when it reads the level). The tables are created beforehand with [db.sql](./src/Sejil.Server/db.sql). Every instance of the application connects to the database: when it cannot, send the logs to a site with `POST /log` instead.
+- **The shared minimum level**: with a `LevelId` the sink follows `[Journal].log_config` (read every `LevelPollSeconds`) and writes nothing below it. That level filters this sink only: the application's own `MinimumLevel` still applies first, so keep it low (for example `Debug`) and let the shared level decide. To make the whole logger follow it, pass a `levelSwitch` and use it for `MinimumLevel.ControlledBy` (in the configuration: `"LevelSwitches": { "$level": "Verbose" }`, `"MinimumLevel": { "ControlledBy": "$level" }`, and `"levelSwitch": "$level"` in `Args`).
+- **The login of the application needs `INSERT`** on `[Journal].log` and `[Journal].log_property` (and `SELECT` on `[Journal].log_config` when it follows the level). The tables are created beforehand with [db.sql](./src/Sejil.Server/db.sql). Every instance of the application connects to the database: when it cannot, send the logs to a site with `POST /log` instead.
 
 ## Shared minimum log level
 

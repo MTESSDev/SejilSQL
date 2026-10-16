@@ -204,7 +204,8 @@ namespace SejilSQL.Test.Logging
         [Fact]
         public void SejilSql_requires_a_connection_string()
         {
-            Assert.Throws<ArgumentException>(() => new LoggerConfiguration().WriteTo.SejilSql(" "));
+            Assert.Throws<InvalidOperationException>(() => new LoggerConfiguration().WriteTo.SejilSql(" "));
+            Assert.Throws<InvalidOperationException>(() => new LoggerConfiguration().WriteTo.SejilSql());
         }
 
         [Fact]
