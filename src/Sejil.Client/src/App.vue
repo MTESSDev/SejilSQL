@@ -6,6 +6,7 @@ import FilterBar from './components/FilterBar.vue';
 import SideBar from './components/SideBar.vue';
 import Toasts from './components/Toasts.vue';
 import TopBar from './components/TopBar.vue';
+import { drawerExpanded, drawerResizing, drawerWidth } from './composables/drawer';
 import { init, moveSelection, select, selectedEntry } from './composables/store';
 
 const topbar = ref<InstanceType<typeof TopBar> | null>(null);
@@ -37,7 +38,11 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey));
 </script>
 
 <template>
-  <div class="app" :class="{ 'with-drawer': selectedEntry }">
+  <div
+    class="app"
+    :class="{ 'with-drawer': selectedEntry, 'drawer-expanded': drawerExpanded, resizing: drawerResizing }"
+    :style="drawerWidth ? { '--drawer-w': `${drawerWidth}px` } : undefined"
+  >
     <TopBar ref="topbar" @menu="menuOpen = !menuOpen" />
     <FilterBar />
     <SideBar :open="menuOpen" @close="menuOpen = false" />
