@@ -55,8 +55,10 @@ const FRAME = /^\s*(?:at|à)\s+([^\s(]+)\((.*?)\)(?:\s+(?:in|dans)\s+(.+?):(?:li
 const SEPARATOR = /^\s*---(?!>).*---\s*$/;
 const INNER = /^\s*--->\s?(.*)$/;
 const INNER_LABEL = /^\(Inner Exception #\d+\)\s*/;
-const TYPE_AND_MESSAGE = /^([\w`+]+(?:\.[\w`+]+)+|\w*(?:Exception|Error))\s*:\s?([\s\S]*)$/;
-const TYPE_ONLY = /^([\w`+]+(?:\.[\w`+]+)+|\w*(?:Exception|Error))$/;
+// « System.Foo.BarException », éventuellement suivi du code HRESULT que SQL Server ajoute : « SqlException (0x80131904) ».
+const TYPE = /(?:[\w`+]+(?:\.[\w`+]+)+|\w*(?:Exception|Error))(?: \(0x[0-9A-Fa-f]+\))?/.source;
+const TYPE_AND_MESSAGE = new RegExp(`^(${TYPE})\\s*:\\s?([\\s\\S]*)$`);
+const TYPE_ONLY = new RegExp(`^(${TYPE})$`);
 const FRAMEWORK = /^(System|Microsoft|Windows|Newtonsoft|Serilog)\./;
 
 function parseHead(text: string, inner: boolean): ExceptionHead {

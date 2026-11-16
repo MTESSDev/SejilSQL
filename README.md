@@ -8,7 +8,7 @@ It is a fork of [Sejil](https://github.com/alaatm/Sejil) by Alaa Masoud (SQLite,
 
 ## Features
 
-- **A modern viewer** (Vue 3, one 115 KB file): light and dark themes, French and English, infinite scroll, automatic refresh, a detail panel with the message, the exception and every property, keyboard shortcuts (`/` to search, arrows to browse, `Esc` to close) and addresses you can share (the filters are in the `#` part).
+- **A modern viewer** (Vue 3, one 128 KB file): light and dark themes, French and English, infinite scroll, automatic refresh, a detail panel (resize it by dragging its edge, or expand it for reading) with the message, every property and a readable exception view: the type and message up front, your own code highlighted, the framework frames dimmed or folded, inner exceptions set apart, a saved queries panel you can fold into a slim rail (the choice is remembered in the browser), keyboard shortcuts (`/` to search, arrows to browse, `Esc` to close) and addresses you can share (the filters are in the `#` part).
 - **A query language**: a word to look for, or conditions such as `UserName = 'bob' && level = Error`, `RequestPath like '%forms%'`, `sourceApp = 'OIM' or sourceApp = 'ECS'`. One click on a property of an event filters on its value. Queries can be saved and shared.
 - **Filters** by period, date range, level and "events with an exception".
 - **Collects the logs of other applications** (`POST /log`), writes them in one round trip, and deletes the old ones.

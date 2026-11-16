@@ -57,6 +57,11 @@ describe('parseException', () => {
     expect(frame).toMatchObject({ kind: 'frame', method: 'C' });
   });
 
+  it('garde le code HRESULT de SQL Server dans le type', () => {
+    const [head] = parseException('Microsoft.Data.SqlClient.SqlException (0x80131904): Violation de la contrainte PRIMARY KEY.\n   at A.B.C()');
+    expect(head).toMatchObject({ type: 'Microsoft.Data.SqlClient.SqlException (0x80131904)', message: 'Violation de la contrainte PRIMARY KEY.' });
+  });
+
   it('ne prend pas une phrase qui commence par « at » pour un appel', () => {
     const [head] = parseException('Erreur inattendue\nat least one value is required');
     expect(head).toMatchObject({ type: '', message: 'Erreur inattendue\nat least one value is required' });

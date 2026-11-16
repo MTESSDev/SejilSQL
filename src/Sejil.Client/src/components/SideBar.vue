@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue';
+import { sidebarCollapsed, toggleSidebar } from '../composables/sidebar';
 import { addCondition, applications, deleteSavedQuery, runQuery, state } from '../composables/store';
 import { t } from '../i18n';
 import Icon from './Icon.vue';
@@ -22,9 +23,18 @@ function filterApp(name: string) {
 
 <template>
   <div v-if="open" class="scrim" @click="emit('close')" />
-  <aside class="sidebar" :class="{ open }" :aria-label="t('savedQueries')">
+  <aside class="sidebar" :class="{ open, collapsed: sidebarCollapsed }" :aria-label="t('savedQueries')">
+    <!-- ruban qui reste quand le panneau est replié (écrans de 860 px et plus) : un clic le rouvre -->
+    <button type="button" class="rail" :aria-label="t('showSidebar')" :title="t('showSidebar')" :aria-expanded="!sidebarCollapsed" @click="toggleSidebar">
+      <Icon name="sidebar" />
+      <span class="rail-label">{{ t('savedQueries') }}</span>
+    </button>
+
     <section>
-      <h2>{{ t('savedQueries') }}</h2>
+      <div class="side-head">
+        <h2>{{ t('savedQueries') }}</h2>
+        <button type="button" class="btn ghost icon collapse" :aria-label="t('hideSidebar')" :title="t('hideSidebar')" :aria-expanded="!sidebarCollapsed" @click="toggleSidebar"><Icon name="sidebar" /></button>
+      </div>
       <p v-if="!state.queries.length" class="empty">{{ t('noSavedQueries') }}</p>
       <ul v-else class="saved-list">
         <li v-for="query in state.queries" :key="query.name" :class="{ active: query.query === state.filters.query }">

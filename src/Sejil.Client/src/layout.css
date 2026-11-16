@@ -2,22 +2,95 @@
 .app {
   display: grid;
   height: 100%;
-  grid-template-columns: 276px minmax(0, 1fr);
+  grid-template-columns: var(--side-w) minmax(0, 1fr);
   grid-template-rows: auto auto minmax(0, 1fr);
   grid-template-areas: 'top top' 'filters filters' 'side main';
 }
 .app {
   /* largeur du panneau de détails : proportionnelle à l'écran, ou celle que la personne a tirée (voir composables/drawer.ts) */
   --drawer-w: clamp(520px, 46vw, 760px);
+  /* largeur du panneau « Requêtes enregistrées » : un fin ruban quand il est replié (écrans de 860 px et plus) */
+  --side-w: 276px;
+}
+@media (min-width: 860px) {
+  .app.side-collapsed {
+    --side-w: 48px;
+  }
+  .sidebar.collapsed {
+    padding: 0;
+    overflow: hidden;
+  }
+  .sidebar.collapsed > section {
+    display: none;
+  }
+  .sidebar.collapsed .rail {
+    display: flex;
+  }
+}
+@media (max-width: 859px) {
+  /* en tiroir, on le ferme par le voile : le bouton de repli n'a pas de sens */
+  .sidebar .collapse {
+    display: none;
+  }
+}
+.sidebar .rail {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  height: 100%;
+  padding: 14px 0;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+.sidebar .rail:hover,
+.sidebar .rail:focus-visible {
+  background: var(--row-hover);
+  color: var(--accent);
+}
+.sidebar .rail .icon-svg {
+  width: 20px;
+  height: 20px;
+}
+.rail-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  writing-mode: vertical-rl;
+}
+.side-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+.side-head h2 {
+  margin-bottom: 0;
+}
+.side-head .collapse {
+  flex: none;
+  width: 28px;
+  height: 28px;
+  margin-top: -6px;
+  color: var(--muted);
+}
+.side-head .collapse .icon-svg {
+  width: 17px;
+  height: 17px;
 }
 .app.with-drawer {
   /* le min() protège d'une largeur mémorisée trop grande pour l'écran actuel */
-  grid-template-columns: 276px minmax(0, 1fr) min(var(--drawer-w), max(380px, calc(100vw - 276px - 240px)));
+  grid-template-columns: var(--side-w) minmax(0, 1fr) min(var(--drawer-w), max(380px, calc(100vw - var(--side-w) - 380px)));
   grid-template-areas: 'top top top' 'filters filters filters' 'side main drawer';
 }
 /* lecture plein écran : la liste garde juste de quoi repérer l'événement */
 .app.with-drawer.drawer-expanded {
-  grid-template-columns: 276px minmax(0, 1fr) max(560px, calc(100vw - 276px - 240px));
+  grid-template-columns: var(--side-w) minmax(0, 1fr) max(560px, calc(100vw - var(--side-w) - 380px));
 }
 .app.resizing {
   cursor: col-resize;
@@ -949,7 +1022,7 @@
 @media (max-width: 1279px) {
   .app.with-drawer,
   .app.with-drawer.drawer-expanded {
-    grid-template-columns: 276px minmax(0, 1fr);
+    grid-template-columns: var(--side-w) minmax(0, 1fr);
     grid-template-areas: 'top top' 'filters filters' 'side main';
   }
   .drawer {

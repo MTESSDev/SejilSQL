@@ -7,6 +7,7 @@ import SideBar from './components/SideBar.vue';
 import Toasts from './components/Toasts.vue';
 import TopBar from './components/TopBar.vue';
 import { drawerExpanded, drawerResizing, drawerWidth } from './composables/drawer';
+import { sidebarCollapsed } from './composables/sidebar';
 import { init, moveSelection, select, selectedEntry } from './composables/store';
 
 const topbar = ref<InstanceType<typeof TopBar> | null>(null);
@@ -40,7 +41,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey));
 <template>
   <div
     class="app"
-    :class="{ 'with-drawer': selectedEntry, 'drawer-expanded': drawerExpanded, resizing: drawerResizing }"
+    :class="{ 'with-drawer': selectedEntry, 'drawer-expanded': drawerExpanded, 'side-collapsed': sidebarCollapsed, resizing: drawerResizing }"
     :style="drawerWidth ? { '--drawer-w': `${drawerWidth}px` } : undefined"
   >
     <TopBar ref="topbar" @menu="menuOpen = !menuOpen" />

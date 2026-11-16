@@ -1,4 +1,6 @@
 import { ref, watch } from 'vue';
+import { sidebarCollapsed } from './sidebar';
+import { readStored as read, writeStored as write } from './storage';
 import { selectedEntry } from './store';
 
 // Préférences d'affichage du panneau de détails, mémorisées dans le navigateur.
@@ -8,26 +10,12 @@ const FRAMEWORK_KEY = 'sejil-exception-hide-framework';
 
 export const MIN_WIDTH = 380;
 /** Place laissée à la liste des événements quand le panneau est à sa largeur maximale (grands écrans). */
-const MIN_LIST = 240;
+const MIN_LIST = 380;
 const SIDEBAR = 276;
+/** Largeur du ruban qui reste quand le panneau latéral est replié. */
+const SIDEBAR_RAIL = 48;
 /** En dessous de cette largeur d'écran, le panneau passe par-dessus la liste (voir layout.css). */
 const OVERLAY_BELOW = 1280;
-
-function read(key: string): string | null {
-  try {
-    return localStorage.getItem(key);
-  } catch {
-    return null; // stockage indisponible : les valeurs par défaut valent pour cette visite
-  }
-}
-
-function write(key: string, value: string) {
-  try {
-    localStorage.setItem(key, value);
-  } catch {
-    // le choix vaut pour cette visite seulement
-  }
-}
 
 function loadWidth(): number | null {
   const n = Number(read(WIDTH_KEY));
@@ -44,7 +32,8 @@ export const wrapLines = ref(read(WRAP_KEY) !== '0');
 export const hideFramework = ref(read(FRAMEWORK_KEY) === '1');
 
 export function maxDrawerWidth(viewport = window.innerWidth): number {
-  return Math.max(MIN_WIDTH, viewport < OVERLAY_BELOW ? viewport : viewport - SIDEBAR - MIN_LIST);
+  const sidebar = sidebarCollapsed.value ? SIDEBAR_RAIL : SIDEBAR;
+  return Math.max(MIN_WIDTH, viewport < OVERLAY_BELOW ? viewport : viewport - sidebar - MIN_LIST);
 }
 
 export function setDrawerWidth(width: number | null) {
