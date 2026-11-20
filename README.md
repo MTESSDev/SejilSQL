@@ -111,6 +111,25 @@ To reuse keys an application already has, name another section: `"Args": { "sect
 - **The shared minimum level**: with a `LevelId` the sink follows `[Journal].log_config` (read every `LevelPollSeconds`) and writes nothing below it. That level filters this sink only: the application's own `MinimumLevel` still applies first, so keep it low (for example `Debug`) and let the shared level decide. To make the whole logger follow it, pass a `levelSwitch` and use it for `MinimumLevel.ControlledBy` (in the configuration: `"LevelSwitches": { "$level": "Verbose" }`, `"MinimumLevel": { "ControlledBy": "$level" }`, and `"levelSwitch": "$level"` in `Args`).
 - **The login of the application needs `INSERT`** on `[Journal].log` and `[Journal].log_property` (and `SELECT` on `[Journal].log_config` when it follows the level). The tables are created beforehand with [db.sql](./src/Sejil.Server/db.sql). Every instance of the application connects to the database: when it cannot, send the logs to a site with `POST /log` instead.
 
+## Slow requests and thread pool starvation
+
+`AddSejilSlowTraces` turns the **slow or failed operations** of the application into log events, and keeps **nothing** for the fast ones. It needs no extra package: it listens to the spans .NET already emits (`System.Diagnostics.Activity`) for incoming ASP.NET Core requests and outgoing `HttpClient` calls.
+
+```csharp
+builder.Services.AddSejilSlowTraces(o =>
+{
+    o.SlowThreshold = TimeSpan.FromMilliseconds(500);   // default
+});
+```
+
+- A span that lasts `SlowThreshold` or more is logged as a **Warning** (`Slow GET /orders took 1243 ms`); a span that ended in error is logged as an **Error**, whatever its duration.
+- Each event has the properties `TraceId`, `SpanId`, `ParentSpanId` and `SpanKind`, plus a short list of tags (`http.route`, `url.path`, `http.response.status_code`, `server.address`, `error.type`). In the viewer, `TraceId = '...'` shows the slow steps of one request together. Add tags with `o.Tags.Add(...)`: they can carry personal data, which is why the list is short.
+- The events go through `ILogger`, so they reach whichever sinks are configured, SejilSQL's included. The minimum level of the logger must let `Warning` through.
+- Listen to more sources (your own, or a library that emits spans) with `o.ActivitySources.Add("MySource")`. `System.Data.SqlClient` emits no span; to see the SQL queries, add an instrumentation that does (for example `OpenTelemetry.Instrumentation.SqlClient`) and add its source.
+- If the logs are sent with `Serilog.Sinks.Http`, ignore the calls to the log site so that the logs do not feed themselves: `o.Filter = a => a.GetTagItem("url.path") as string != "/log"`.
+
+**Thread pool starvation.** A watcher runs on a thread of its own (outside the pool, so it keeps working when the pool is starved). Every `ThreadPoolSamplePeriod` (5 s) it queues a work item and times how long the pool takes to start it. When that wait reaches `ThreadPoolLatencyThreshold` (250 ms), or `ThreadPoolPendingThreshold` (50) work items are waiting, for `ThreadPoolConsecutiveSamples` (2) probes in a row, it logs a Warning with `ThreadCount`, `BusyWorkerThreads`, `MinWorkerThreads` and `MaxWorkerThreads`, repeats it at most once per `ThreadPoolRepeatEvery` (1 minute), and logs when the pool is back to normal. A healthy application logs nothing. Turn it off with `o.ThreadPoolWatcher = false`.
+
 ## Shared minimum log level
 
 Set `LevelId` on the settings to keep the minimum log level in `[Journal].log_config` instead of in memory. `GET {Url}/min-log-level` then returns `{"minimumLogLevel":"Warning"}` for that identifier, and the level chosen in the viewer is saved under it. Applications read it periodically and apply it to a `LoggingLevelSwitch`. These two routes are anonymous. If `Url` is behind authentication, expose them elsewhere with `LevelPath` (GET and POST).
