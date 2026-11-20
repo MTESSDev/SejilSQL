@@ -155,6 +155,10 @@ Set `LevelId` on the settings to keep the minimum log level in `[Journal].log_co
 - `ISejilController.SetMinimumLogLevel` became `SetMinimumLogLevelAsync`, and `ISejilSettings` gained `IngestPath`, `LevelId` and `LevelPath` (default interface members, nothing to implement).
 - Run [db.sql](./src/Sejil.Server/db.sql) again: it adds `[Journal].log_config`.
 
+### What 3.4 adds
+
+- `services.AddSejilSlowTraces(...)`: logs the slow or failed requests and outgoing HTTP calls (with their `TraceId`), and warns when the thread pool is starved. Nothing is kept for the fast ones. See [Slow requests and thread pool starvation](#slow-requests-and-thread-pool-starvation).
+
 ### What 3.2 adds
 
 - `WriteTo.SejilSql(connectionString, sourceApp)`: the Serilog sink that writes straight to the database (see above).
