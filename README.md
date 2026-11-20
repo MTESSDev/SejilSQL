@@ -118,17 +118,33 @@ To reuse keys an application already has, name another section: `"Args": { "sect
 ```csharp
 builder.Services.AddSejilSlowTraces(o =>
 {
-    o.SlowThreshold = TimeSpan.FromMilliseconds(500);   // default
+    o.SlowThreshold = TimeSpan.FromMilliseconds(1000);  // default
 });
 ```
 
-- A span that lasts `SlowThreshold` or more is logged as a **Warning** (`Slow GET /orders took 1243 ms`); a span that ended in error is logged as an **Error**, whatever its duration.
-- Each event has the properties `TraceId`, `SpanId`, `ParentSpanId` and `SpanKind`, plus a short list of tags (`http.route`, `url.path`, `http.response.status_code`, `server.address`, `error.type`). In the viewer, `TraceId = '...'` shows the slow steps of one request together. Add tags with `o.Tags.Add(...)`: they can carry personal data, which is why the list is short.
+- A **request** is the span that has no parent in the process (an incoming request, or a call made by a background job) and everything that ran under it. When it lasts `SlowThreshold` or more it is logged as ONE **Warning** with the whole tree of its steps; when it, or one of its steps, ended in error it is logged as an **Error**, whatever its duration. A fast request that succeeds leaves nothing (its steps are held in memory while it runs, then forgotten).
+- The tree is in the `Trace` property, each step with the time it took, its status and when it started:
+
+  ```
+  Slow GET /orders/{id} took 1341 ms; slowest step: GET http://inventory/api/stock 721 ms
+
+  GET /orders/{id}  1341 ms [200]
+  ├─ GET http://inventory/api/stock  721 ms [200]  (+9 ms)
+  └─ POST http://payments/charge  607 ms [503]  (+734 ms)
+  ```
+
+  Query strings are left out (they can hold secrets). At most `TraceTreeMaxLines` (40) lines; beyond that, `… N more`. An outgoing call is a step of the request that made it, so a call to another service shows up as one line with the time **the caller waited**. That service logs its own side with the **same `TraceId`** when it is slow itself (if it also uses this): `TraceId = '...'` in the viewer puts the two sides together. A service that answers fast leaves nothing, so its own breakdown is not there.
+- Each event has the properties `TraceId`, `SpanId`, `ParentSpanId`, `SpanKind`, `SpanCount` and a short list of tags (`http.route`, `http.response.status_code`, `server.address`, `error.type`). Add tags with `o.Tags.Add(...)`: they can carry personal data, which is why the list is short.
+- ASP.NET Core records the span of a request without saying which request it is (no name, no tags: that is what the OpenTelemetry instrumentation adds). A small middleware, put in front of the pipeline by `AddSejilSlowTraces`, names it (`GET /orders/{id}`, the route pattern, so that requests for different ids group together), adds the status code, and marks a **5xx the application returned** as failed (ASP.NET Core only does so for an unhandled exception).
 - The events go through `ILogger`, so they reach whichever sinks are configured, SejilSQL's included. The minimum level of the logger must let `Warning` through.
 - Listen to more sources (your own, or a library that emits spans) with `o.ActivitySources.Add("MySource")`. `System.Data.SqlClient` emits no span; to see the SQL queries, add an instrumentation that does (for example `OpenTelemetry.Instrumentation.SqlClient`) and add its source.
-- If the logs are sent with `Serilog.Sinks.Http`, ignore the calls to the log site so that the logs do not feed themselves: `o.Filter = a => a.GetTagItem("url.path") as string != "/log"`.
+- If the logs are sent with `Serilog.Sinks.Http`, ignore the calls to the log site so that the logs do not feed themselves (they are requests of their own, with no parent): `o.Filter = a => !(a.GetTagItem("url.full") is string url && url.Contains("/log"))`.
 
 **Thread pool starvation.** A watcher runs on a thread of its own (outside the pool, so it keeps working when the pool is starved). Every `ThreadPoolSamplePeriod` (5 s) it queues a work item and times how long the pool takes to start it. When that wait reaches `ThreadPoolLatencyThreshold` (250 ms), or `ThreadPoolPendingThreshold` (50) work items are waiting, for `ThreadPoolConsecutiveSamples` (2) probes in a row, it logs a Warning with `ThreadCount`, `BusyWorkerThreads`, `MinWorkerThreads` and `MaxWorkerThreads`, repeats it at most once per `ThreadPoolRepeatEvery` (1 minute), and logs when the pool is back to normal. A healthy application logs nothing. Turn it off with `o.ThreadPoolWatcher = false`.
+
+The warning also carries **`InFlightRequests`**, the incoming requests being served at that moment, grouped by route, busiest first: `19× GET /block (oldest 8 s); 2× GET /orders/{id} (oldest 1.2 s)` (`InFlightCount` is their total). It names the routes to look at, not the line of code: a request that blocks a thread and one that awaits a database without holding any are both "in flight". To see which code holds the threads you need their stacks (`dotnet-stack report -p <pid>`, or `dotnet-dump`, run while it happens).
+
+What it does **not** show: the requests that **suffer** from the starvation. A request that waits in the server's queue for a free thread has not started yet, so its span does not exist and the wait is counted nowhere: in a test, a `/fast` request took 21 s for the client and was not logged as slow. Starvation is told by the warning and by `InFlightRequests`, not by slow requests.
 
 ## Shared minimum log level
 
@@ -157,7 +173,7 @@ Set `LevelId` on the settings to keep the minimum log level in `[Journal].log_co
 
 ### What 3.4 adds
 
-- `services.AddSejilSlowTraces(...)`: logs the slow or failed requests and outgoing HTTP calls (with their `TraceId`), and warns when the thread pool is starved. Nothing is kept for the fast ones. See [Slow requests and thread pool starvation](#slow-requests-and-thread-pool-starvation).
+- `services.AddSejilSlowTraces(...)`: logs the slow or failed requests with the tree of their steps (outgoing HTTP calls, with the time of each) and their `TraceId`, and warns when the thread pool is starved, with the requests in flight. Nothing is kept for the fast ones. The default threshold is 1 second. See [Slow requests and thread pool starvation](#slow-requests-and-thread-pool-starvation).
 
 ### What 3.2 adds
 

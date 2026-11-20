@@ -1,4 +1,5 @@
 using System;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using SejilSQL.Diagnostics;
@@ -29,6 +30,9 @@ namespace Microsoft.Extensions.DependencyInjection
             configure?.Invoke(options);
 
             services.Replace(ServiceDescriptor.Singleton(options));
+            services.TryAddSingleton<InFlightTracker>();
+            // names the span of each request ("GET /orders/{id}"), and marks a 5xx as failed
+            services.TryAddEnumerable(ServiceDescriptor.Transient<IStartupFilter, SlowTraceStartupFilter>());
             services.TryAddEnumerable(ServiceDescriptor.Singleton<IHostedService, SlowTraceService>());
             services.TryAddEnumerable(ServiceDescriptor.Singleton<IHostedService, ThreadPoolWatcher>());
 

@@ -10,8 +10,14 @@ namespace SejilSQL.Diagnostics
     /// </summary>
     public sealed class SejilTraceOptions
     {
-        /// <summary>An operation (HTTP request, outgoing HTTP call...) that lasts this long or more is logged as a Warning. 500 ms by default.</summary>
-        public TimeSpan SlowThreshold { get; set; } = TimeSpan.FromMilliseconds(500);
+        /// <summary>An operation (HTTP request, outgoing HTTP call...) that lasts this long or more is logged as a Warning. 1 second by default.</summary>
+        public TimeSpan SlowThreshold { get; set; } = TimeSpan.FromMilliseconds(1000);
+
+        /// <summary>
+        /// The most lines of the tree of steps written with a slow request (<c>Trace</c> property): the request itself, then its calls
+        /// and what they called. Beyond it, "… N more". 40 by default.
+        /// </summary>
+        public int TraceTreeMaxLines { get; set; } = 40;
 
         /// <summary>Also log the operations that ended in error (Error level), whatever their duration. True by default.</summary>
         public bool LogErrors { get; set; } = true;

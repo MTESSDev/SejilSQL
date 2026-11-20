@@ -22,8 +22,11 @@ namespace SejilSQL.Diagnostics
         private readonly ManualResetEventSlim _stop = new ManualResetEventSlim(false);
         private Thread _thread;
 
-        public ThreadPoolWatcher(SejilTraceOptions options, ILoggerFactory loggerFactory)
+        private readonly InFlightTracker _inFlight;
+
+        public ThreadPoolWatcher(SejilTraceOptions options, ILoggerFactory loggerFactory, InFlightTracker inFlight = null)
         {
+            _inFlight = inFlight;
             _options = options ?? throw new ArgumentNullException(nameof(options));
             _logger = (loggerFactory ?? throw new ArgumentNullException(nameof(loggerFactory))).CreateLogger("SejilSQL.ThreadPool");
         }
@@ -118,14 +121,23 @@ namespace SejilSQL.Diagnostics
             ThreadPool.GetAvailableThreads(out var availableWorkers, out _);
             ThreadPool.GetMaxThreads(out var maxWorkers, out _);
 
-            using (_logger.BeginScope(new System.Collections.Generic.Dictionary<string, object>
+            var scope = new System.Collections.Generic.Dictionary<string, object>
             {
                 ["ThreadCount"] = ThreadPool.ThreadCount,
                 ["MinWorkerThreads"] = minWorkers,
                 ["BusyWorkerThreads"] = maxWorkers - availableWorkers,
                 ["MaxWorkerThreads"] = maxWorkers,
                 ["CompletedWorkItems"] = ThreadPool.CompletedWorkItemCount,
-            }))
+            };
+
+            // The routes to look at first. They hold threads, or wait without holding any: the stack of the busy threads is what tells.
+            if (level != LogLevel.Information && _inFlight?.Summary() is string inFlight)
+            {
+                scope["InFlightCount"] = _inFlight.Count;
+                scope["InFlightRequests"] = inFlight;
+            }
+
+            using (_logger.BeginScope(scope))
             {
                 if (level == LogLevel.Information)
                 {
